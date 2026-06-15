@@ -1,0 +1,16 @@
+{
+  "rows": 10648,
+  "candidates": 173001,
+  "teacher_sources": {
+    "trajectory_gold_live_replay": 5870,
+    "trajectory_gold_live_replay_intermediate": 4765,
+    "successful_qwen_base_trajectory": 7,
+    "successful_qwen_base_trajectory_intermediate": 6
+  },
+  "mean_candidates": 16.247276483846733,
+  "mean_selected": 6.247652141247182,
+  "task_solvable": {
+    "true": 2739,
+    "false": 7909
+  }
+}

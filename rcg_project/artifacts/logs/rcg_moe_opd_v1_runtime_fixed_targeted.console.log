@@ -1,0 +1,56 @@
+[qwen_rcg_swarm] serial_route_weather
+{"success": true, "coverage": 1.0, "precision": 1.0, "latency_s": 29.785, "turns": 1, "tool_calls": 4}
+[qwen_rcg_swarm] partial_503
+{"success": true, "coverage": 1.0, "precision": 1.0, "latency_s": 15.962, "turns": 1, "tool_calls": 2}
+[qwen_rcg_swarm] recovery_fallback
+{"success": true, "coverage": 1.0, "precision": 1.0, "latency_s": 17.563, "turns": 1, "tool_calls": 2}
+{
+  "qwen_rcg_swarm": {
+    "cases": 3,
+    "task_success_rate": 1.0,
+    "tool_coverage": 1.0,
+    "planning_precision": 1.0,
+    "successful_tool_coverage": 1.0,
+    "dependency_accuracy": 1.0,
+    "failure_attribution_accuracy": 1.0,
+    "hallucination_free_rate": 1.0,
+    "mean_latency_s": 21.103333333333335,
+    "mean_main_turns": 1.0,
+    "mean_tool_calls": 2.6666666666666665,
+    "main_tokens": 3471,
+    "swarm_tokens": 8642,
+    "dependency_transfers": 0,
+    "mean_main_model_generations": 0.0,
+    "direct_takeover_rate": 1.0,
+    "main_generation_tokens": 0
+  }
+}
+[qwen_rcg_swarm] parallel_travel
+{"success": true, "coverage": 1.0, "precision": 1.0, "latency_s": 21.209, "turns": 1, "tool_calls": 3}
+[qwen_rcg_swarm] serial_orders_reviews
+{"success": true, "coverage": 1.0, "precision": 1.0, "latency_s": 21.25, "turns": 1, "tool_calls": 3}
+[qwen_rcg_swarm] partial_401
+{"success": true, "coverage": 1.0, "precision": 1.0, "latency_s": 17.292, "turns": 1, "tool_calls": 2}
+[qwen_rcg_swarm] long_chain_budget
+{"success": true, "coverage": 1.0, "precision": 1.0, "latency_s": 37.784, "turns": 1, "tool_calls": 5}
+{
+  "qwen_rcg_swarm": {
+    "cases": 7,
+    "task_success_rate": 1.0,
+    "tool_coverage": 1.0,
+    "planning_precision": 1.0,
+    "successful_tool_coverage": 1.0,
+    "dependency_accuracy": 1.0,
+    "failure_attribution_accuracy": 1.0,
+    "hallucination_free_rate": 1.0,
+    "mean_latency_s": 22.977857142857143,
+    "mean_main_turns": 1.0,
+    "mean_tool_calls": 3.0,
+    "main_tokens": 8134,
+    "swarm_tokens": 24952,
+    "dependency_transfers": 0,
+    "mean_main_model_generations": 0.0,
+    "direct_takeover_rate": 1.0,
+    "main_generation_tokens": 0
+  }
+}

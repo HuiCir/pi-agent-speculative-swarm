@@ -1,0 +1,6 @@
+# Install the CUDA-enabled torch wheel separately before this file.
+# 4.57.0 matches the validated GPU server environment.
+transformers==4.57.0
+accelerate==1.13.0
+safetensors==0.8.0
+datasets==5.0.0

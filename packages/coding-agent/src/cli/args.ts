@@ -45,6 +45,10 @@ export interface Args {
 	listModels?: string | true;
 	offline?: boolean;
 	verbose?: boolean;
+	localQwen?: boolean;
+	localModelPath?: string;
+	localPython?: string;
+	localCacheGb?: number;
 	swarm?: boolean;
 	swarmModel?: string;
 	swarmAgents?: string[];
@@ -52,7 +56,14 @@ export interface Args {
 	swarmMaxTurns?: number;
 	swarmTimeoutMs?: number;
 	swarmToolPolicy?: "none" | "readonly" | "all";
+	swarmExecutionMode?: "auto" | "parallel" | "sequential";
 	swarmAllowBash?: boolean;
+	swarmRcgUrl?: string;
+	swarmRcgTimeoutMs?: number;
+	swarmLocalModelPath?: string;
+	swarmLocalPython?: string;
+	swarmLocalRcgCheckpoint?: string;
+	swarmLocalCacheGb?: number;
 	messages: string[];
 	fileArgs: string[];
 	/** Unknown flags (potentially extension flags) - map of flag name to value */
@@ -179,6 +190,17 @@ export function parseArgs(args: string[]): Args {
 			result.verbose = true;
 		} else if (arg === "--offline") {
 			result.offline = true;
+		} else if (arg === "--local-qwen") {
+			result.localQwen = true;
+		} else if (arg === "--local-model-path" && i + 1 < args.length) {
+			result.localModelPath = args[++i];
+			result.localQwen = true;
+		} else if (arg === "--local-python" && i + 1 < args.length) {
+			result.localPython = args[++i];
+			result.localQwen = true;
+		} else if (arg === "--local-cache-gb" && i + 1 < args.length) {
+			result.localCacheGb = parsePositiveNumber(args[++i], "--local-cache-gb", result);
+			result.localQwen = true;
 		} else if (arg === "--swarm") {
 			result.swarm = true;
 		} else if (arg === "--swarm-model" && i + 1 < args.length) {
@@ -210,8 +232,37 @@ export function parseArgs(args: string[]): Args {
 					message: `Invalid --swarm-tool-policy "${value}". Valid values: none, readonly, all`,
 				});
 			}
+		} else if (arg === "--swarm-execution-mode" && i + 1 < args.length) {
+			const value = args[++i];
+			if (value === "auto" || value === "parallel" || value === "sequential") {
+				result.swarmExecutionMode = "auto";
+				result.swarm = true;
+			} else {
+				result.diagnostics.push({
+					type: "error",
+					message: `Invalid --swarm-execution-mode "${value}". Valid values: auto, parallel, sequential`,
+				});
+			}
 		} else if (arg === "--swarm-allow-bash") {
 			result.swarmAllowBash = true;
+			result.swarm = true;
+		} else if (arg === "--swarm-rcg-url" && i + 1 < args.length) {
+			result.swarmRcgUrl = args[++i];
+			result.swarm = true;
+		} else if (arg === "--swarm-rcg-timeout-ms" && i + 1 < args.length) {
+			result.swarmRcgTimeoutMs = parsePositiveInteger(args[++i], "--swarm-rcg-timeout-ms", result);
+			result.swarm = true;
+		} else if (arg === "--swarm-local-model-path" && i + 1 < args.length) {
+			result.swarmLocalModelPath = args[++i];
+			result.swarm = true;
+		} else if (arg === "--swarm-local-python" && i + 1 < args.length) {
+			result.swarmLocalPython = args[++i];
+			result.swarm = true;
+		} else if (arg === "--swarm-local-rcg-checkpoint" && i + 1 < args.length) {
+			result.swarmLocalRcgCheckpoint = args[++i];
+			result.swarm = true;
+		} else if (arg === "--swarm-local-cache-gb" && i + 1 < args.length) {
+			result.swarmLocalCacheGb = parsePositiveNumber(args[++i], "--swarm-local-cache-gb", result);
 			result.swarm = true;
 		} else if (arg.startsWith("@")) {
 			result.fileArgs.push(arg.slice(1)); // Remove @ prefix
@@ -245,6 +296,18 @@ function parsePositiveInteger(value: string, flag: string, result: Args): number
 		result.diagnostics.push({
 			type: "error",
 			message: `${flag} must be a positive integer`,
+		});
+		return undefined;
+	}
+	return parsed;
+}
+
+function parsePositiveNumber(value: string, flag: string, result: Args): number | undefined {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed) || parsed <= 0) {
+		result.diagnostics.push({
+			type: "error",
+			message: `${flag} must be a positive number`,
 		});
 		return undefined;
 	}
@@ -313,14 +376,26 @@ ${chalk.bold("Options:")}
   --list-models [search]         List available models (with optional fuzzy search)
   --verbose                      Force verbose startup (overrides quietStartup setting)
   --offline                      Disable startup network operations (same as PI_OFFLINE=1)
+  --local-qwen                   Run the main Pi agent on the native local Qwen3-8B runtime
+  --local-model-path <p>         Local Qwen3-8B model directory
+  --local-python <p>             Python executable with MLX and MLX-LM
+  --local-cache-gb <n>           Native KV cache budget in GiB
   --swarm                        Enable residual speculative swarm before main model requests
-  --swarm-model <pattern>        Model pattern for swarm subagents, e.g. v4flash
+  --swarm-model <pattern>        Rejected in local-native swarm mode
   --swarm-agents <names>         Comma-separated subagent names
   --swarm-rounds <n>             Number of swarm draft rounds per main request
   --swarm-max-turns <n>          Max tool/LLM turns per subagent draft
   --swarm-timeout-ms <n>         Timeout per subagent draft
   --swarm-tool-policy <policy>   Subagent tools: none, readonly, or all
+  --swarm-execution-mode <mode>  Deprecated compatibility flag; all values use unified auto
   --swarm-allow-bash             Allow bash in readonly swarm tool policy
+  --swarm-rcg-url <url>          Rejected; RCG runs in the shared local process
+  --swarm-rcg-timeout-ms <n>     Deprecated with the local native runtime
+  --swarm-local-model-path <p>   Local Qwen3-8B model directory
+  --swarm-local-python <p>       Python executable with torch, MLX, and MLX-LM
+  --swarm-local-rcg-checkpoint <p>
+                                 RCG controller checkpoint trained with Qwen3-8B
+  --swarm-local-cache-gb <n>     Shared native KV cache budget in GiB
   --help, -h                     Show this help
   --version, -v                  Show version number
 

@@ -1,0 +1,5 @@
+{"timestamp":1781501976765,"tool":"resolve_customer","args":{"customer":"Alice"},"status":"ok","result":"CUSTOMER_ID=cust-42 CUSTOMER=Alice"}
+{"timestamp":1781501976765,"tool":"get_weather","args":{"city":"Berlin"},"status":"ok","result":"WEATHER_CONDITION=SUNNY CITY=Berlin"}
+{"timestamp":1781501982407,"tool":"fetch_orders","args":{"customer_id":"cust-42"},"status":"ok","result":"ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"}
+{"timestamp":1781501988837,"tool":"fetch_order_total","args":{"order_ids":"ord-7,ord-8"},"status":"ok","result":"ORDER_TOTAL=125 ORDER_IDS=ord-7,ord-8"}
+{"timestamp":1781501996481,"tool":"check_budget","args":{"order_total":125,"limit":200},"status":"ok","result":"BUDGET_STATUS=WITHIN_LIMIT ORDER_TOTAL=125 LIMIT=200"}

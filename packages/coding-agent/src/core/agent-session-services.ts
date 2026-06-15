@@ -58,6 +58,7 @@ export interface CreateAgentSessionFromServicesOptions {
 	noTools?: CreateAgentSessionOptions["noTools"];
 	customTools?: ToolDefinition[];
 	speculativeSwarm?: CreateAgentSessionOptions["speculativeSwarm"];
+	localQwenRuntime?: CreateAgentSessionOptions["localQwenRuntime"];
 }
 
 /**
@@ -198,6 +199,7 @@ export async function createAgentSessionFromServices(
 		noTools: options.noTools,
 		customTools: options.customTools,
 		speculativeSwarm: options.speculativeSwarm,
+		localQwenRuntime: options.localQwenRuntime,
 		sessionStartEvent: options.sessionStartEvent,
 	});
 }

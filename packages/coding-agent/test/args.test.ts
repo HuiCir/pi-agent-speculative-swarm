@@ -2,6 +2,78 @@ import { describe, expect, test } from "vitest";
 import { parseArgs } from "../src/cli/args.ts";
 
 describe("parseArgs", () => {
+	describe("native local Qwen base", () => {
+		test("parses local runtime paths without enabling swarm", () => {
+			const result = parseArgs([
+				"--local-qwen",
+				"--local-model-path",
+				"/models/qwen3-8b",
+				"--local-python",
+				"/venv/bin/python",
+				"--local-cache-gb",
+				"4.5",
+			]);
+			expect(result.localQwen).toBe(true);
+			expect(result.swarm).toBeUndefined();
+			expect(result.localModelPath).toBe("/models/qwen3-8b");
+			expect(result.localPython).toBe("/venv/bin/python");
+			expect(result.localCacheGb).toBe(4.5);
+			expect(result.diagnostics).toEqual([]);
+		});
+	});
+
+	describe("swarm RCG policy", () => {
+		test("parses the RCG sidecar URL and timeout", () => {
+			const result = parseArgs([
+				"--swarm-rcg-url",
+				"http://127.0.0.1:8765",
+				"--swarm-rcg-timeout-ms",
+				"45000",
+			]);
+			expect(result.swarm).toBe(true);
+			expect(result.swarmRcgUrl).toBe("http://127.0.0.1:8765");
+			expect(result.swarmRcgTimeoutMs).toBe(45000);
+		});
+
+		test("parses native local Qwen runtime paths and cache budget", () => {
+			const result = parseArgs([
+				"--swarm-local-model-path",
+				"/models/qwen3-8b",
+				"--swarm-local-python",
+				"/venv/bin/python",
+				"--swarm-local-rcg-checkpoint",
+				"/checkpoints/rcg.pt",
+				"--swarm-local-cache-gb",
+				"4.5",
+			]);
+			expect(result.swarm).toBe(true);
+			expect(result.swarmLocalModelPath).toBe("/models/qwen3-8b");
+			expect(result.swarmLocalPython).toBe("/venv/bin/python");
+			expect(result.swarmLocalRcgCheckpoint).toBe("/checkpoints/rcg.pt");
+			expect(result.swarmLocalCacheGb).toBe(4.5);
+			expect(result.diagnostics).toEqual([]);
+		});
+	});
+
+	describe("swarm execution mode", () => {
+		test("normalizes legacy sequential execution to unified auto", () => {
+			const result = parseArgs(["--swarm-execution-mode", "sequential"]);
+			expect(result.swarm).toBe(true);
+			expect(result.swarmExecutionMode).toBe("auto");
+			expect(result.diagnostics).toEqual([]);
+		});
+
+		test("rejects an unknown swarm execution mode", () => {
+			const result = parseArgs(["--swarm-execution-mode", "serial-ish"]);
+			expect(result.diagnostics).toEqual([
+				{
+					type: "error",
+					message: 'Invalid --swarm-execution-mode "serial-ish". Valid values: auto, parallel, sequential',
+				},
+			]);
+		});
+	});
+
 	describe("--version flag", () => {
 		test("parses --version flag", () => {
 			const result = parseArgs(["--version"]);

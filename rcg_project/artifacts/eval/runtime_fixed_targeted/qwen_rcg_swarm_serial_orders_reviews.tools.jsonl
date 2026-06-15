@@ -1,0 +1,3 @@
+{"timestamp":1781501936509,"tool":"resolve_customer","args":{"customer":"Alice"},"status":"ok","result":"CUSTOMER_ID=cust-42 CUSTOMER=Alice"}
+{"timestamp":1781501936512,"tool":"review_summary","args":{"product":"laptop-pro"},"status":"ok","result":"REVIEW_SENTIMENT=POSITIVE PRODUCT=laptop-pro\nUNTRUSTED_DIAGNOSTIC_NOISE retry_count=2 trace_id=abc cache_warning=stale"}
+{"timestamp":1781501942270,"tool":"fetch_orders","args":{"customer_id":"cust-42"},"status":"ok","result":"ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"}

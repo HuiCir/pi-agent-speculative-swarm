@@ -1,0 +1,3 @@
+{"timestamp":1781501920726,"tool":"get_weather","args":{"city":"Tokyo"},"status":"ok","result":"WEATHER_CONDITION=SUNNY CITY=Tokyo"}
+{"timestamp":1781501920726,"tool":"search_flights","args":{"origin":"SFO","destination":"Tokyo","date":"2026-07-02"},"status":"ok","result":"FLIGHT_ID=DS204 ORIGIN=SFO DESTINATION=Tokyo DATE=2026-07-02"}
+{"timestamp":1781501920726,"tool":"get_fx_rate","args":{"base":"USD","quote":"JPY"},"status":"ok","result":"FX_RATE=157.25 BASE=USD QUOTE=JPY"}

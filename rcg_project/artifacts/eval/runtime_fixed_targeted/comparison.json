@@ -1,0 +1,573 @@
+{
+  "model": "/Users/migraine/models/qwen3-8b",
+  "checkpoint": "/Users/migraine/Downloads/orch/rcg/outputs/server_latest/rcg_project/checkpoints/rcg_moe_opd_v1_harness_adapter_best.pt",
+  "systems": {
+    "qwen_rcg_swarm": {
+      "cases": 7,
+      "task_success_rate": 1.0,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "dependency_accuracy": 1.0,
+      "failure_attribution_accuracy": 1.0,
+      "hallucination_free_rate": 1.0,
+      "mean_latency_s": 22.977857142857143,
+      "mean_main_turns": 1.0,
+      "mean_tool_calls": 3.0,
+      "main_tokens": 8134,
+      "swarm_tokens": 24952,
+      "dependency_transfers": 0,
+      "mean_main_model_generations": 0.0,
+      "direct_takeover_rate": 1.0,
+      "main_generation_tokens": 0
+    }
+  },
+  "rows": [
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "serial_route_weather",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 29.785,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1128,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 1128,
+        "totalTokens": 1148,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 3,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 3,
+        "swarm_tokens": 3871
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501833097,
+          "tool": "get_weather",
+          "args": {
+            "city": "San Francisco"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=San Francisco"
+        },
+        {
+          "timestamp": 1781501833098,
+          "tool": "geocode",
+          "args": {
+            "place": "Golden Gate Bridge"
+          },
+          "status": "ok",
+          "result": "PLACE=Golden Gate Bridge LAT=37.8199 LON=-122.4783"
+        },
+        {
+          "timestamp": 1781501833098,
+          "tool": "geocode",
+          "args": {
+            "place": "Ferry Building"
+          },
+          "status": "ok",
+          "result": "PLACE=Ferry Building LAT=37.7955 LON=-122.3937"
+        },
+        {
+          "timestamp": 1781501844493,
+          "tool": "route_time",
+          "args": {
+            "origin_lat": 37.8199,
+            "origin_lon": -122.4783,
+            "destination_lat": 37.7955,
+            "destination_lon": -122.3937
+          },
+          "status": "ok",
+          "result": "ROUTE_MINUTES=24 MODE=drive"
+        }
+      ],
+      "final_text": "[get_weather]\nget_weather({\"city\":\"San Francisco\"}) => WEATHER_CONDITION=SUNNY CITY=San Francisco\n\n[geocode]\ngeocode({\"place\":\"Golden Gate Bridge\"}) => PLACE=Golden Gate Bridge LAT=37.8199 LON=-122.4783\ngeocode({\"place\":\"Ferry Building\"}) => PLACE=Ferry Building LAT=37.7955 LON=-122.3937\n\n[route_time]\nroute_time({\"destination_lat\":37.7955,\"destination_lon\":-122.3937,\"origin_lat\":37.8199,\"origin_lon\":-122.4783}) => ROUTE_MINUTES=24 MODE=drive (24 minutes)",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-get_weather-1v0dkka-A\", \"swarm-branch-rcg-geocode-1ma3sf3-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1128, 1147], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 11.718, \"outputTokens\": [20, 43], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-route_time-xg4j92-A\"], \"maxTokens\": [128], \"promptTokens\": [1466], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 10.723, \"outputTokens\": [67], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 4,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "partial_503",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 15.962,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1137,
+        "output": 19,
+        "cacheRead": 0,
+        "cacheWrite": 1137,
+        "totalTokens": 1156,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 2,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 2,
+        "swarm_tokens": 2331
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501860482,
+          "tool": "get_weather",
+          "args": {
+            "city": "London"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=London"
+        },
+        {
+          "timestamp": 1781501860483,
+          "tool": "inventory_status",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "error",
+          "result": "503 Service Unavailable from inventory provider"
+        }
+      ],
+      "final_text": "TASK_STATUS: COMPLETE_WITH_REPORTED_FAILURE\nThe swarm completed the truthful response using verified successes and attributed failure evidence.\nFAILED_STEPS:\n- rcg-inventory_status-9nf7xv | inventory_status | server_or_network | recovery=abandon_tool_for_this_task_and_report_service_failure\nRequired response: preserve verified partial evidence, identify failed components precisely, and never invent a successful tool result.\n\nVERIFIED_PARTIAL_RESULTS:\n- get_weather: get_weather({\"city\":\"London\"}) => WEATHER_CONDITION=SUNNY CITY=London\n- inventory_status: inventory_status({\"sku\":\"SKU-404\"}) => 503 Service Unavailable from inventory provider",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-get_weather-1v0dkka-A\", \"swarm-branch-rcg-inventory_status-9nf7xv-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1137, 1152], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 9.308, \"outputTokens\": [19, 23], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 2,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "recovery_fallback",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 17.563,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1144,
+        "output": 23,
+        "cacheRead": 0,
+        "cacheWrite": 1144,
+        "totalTokens": 1167,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 2,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 2,
+        "swarm_tokens": 2440
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501873123,
+          "tool": "inventory_status",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "error",
+          "result": "503 Service Unavailable from inventory provider"
+        },
+        {
+          "timestamp": 1781501878209,
+          "tool": "inventory_fallback",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "ok",
+          "result": "INVENTORY_AVAILABLE=12 SKU=SKU-404 PROVIDER=fallback"
+        }
+      ],
+      "final_text": "[inventory_status]\ninventory_status({\"sku\":\"SKU-404\"}) => 503 Service Unavailable from inventory provider\n\n[inventory_fallback]\ninventory_fallback({\"sku\":\"SKU-404\"}) => INVENTORY_AVAILABLE=12 SKU=SKU-404 PROVIDER=fallback",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-inventory_status-9nf7xv-A\"], \"maxTokens\": [128], \"promptTokens\": [1144], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.89, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-inventory_fallback-1kzc0jp-A\"], \"maxTokens\": [128], \"promptTokens\": [1249], \"cacheReadTokens\": [705]}\n[local-qwen-rcg] generate complete {\"seconds\": 4.613, \"outputTokens\": [24], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 2,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "parallel_travel",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 21.209,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1141,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 1141,
+        "totalTokens": 1161,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 3,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 3,
+        "swarm_tokens": 3567
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501920726,
+          "tool": "get_weather",
+          "args": {
+            "city": "Tokyo"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=Tokyo"
+        },
+        {
+          "timestamp": 1781501920726,
+          "tool": "search_flights",
+          "args": {
+            "origin": "SFO",
+            "destination": "Tokyo",
+            "date": "2026-07-02"
+          },
+          "status": "ok",
+          "result": "FLIGHT_ID=DS204 ORIGIN=SFO DESTINATION=Tokyo DATE=2026-07-02"
+        },
+        {
+          "timestamp": 1781501920726,
+          "tool": "get_fx_rate",
+          "args": {
+            "base": "USD",
+            "quote": "JPY"
+          },
+          "status": "ok",
+          "result": "FX_RATE=157.25 BASE=USD QUOTE=JPY"
+        }
+      ],
+      "final_text": "[get_weather]\nget_weather({\"city\":\"Tokyo\"}) => WEATHER_CONDITION=SUNNY CITY=Tokyo\n\n[search_flights]\nsearch_flights({\"date\":\"2026-07-02\",\"destination\":\"Tokyo\",\"origin\":\"SFO\"}) => FLIGHT_ID=DS204 ORIGIN=SFO DESTINATION=Tokyo DATE=2026-07-02\n\n[get_fx_rate]\nget_fx_rate({\"base\":\"USD\",\"quote\":\"JPY\"}) => FX_RATE=157.25 BASE=USD QUOTE=JPY",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 3, \"sessions\": [\"swarm-branch-rcg-get_weather-1v0dkka-A\", \"swarm-branch-rcg-search_flights-1bsmcrt-B\", \"swarm-branch-rcg-get_fx_rate-mmn931-C\"], \"maxTokens\": [128, 128, 128], \"promptTokens\": [1141, 1174, 1162], \"cacheReadTokens\": [0, 0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 14.261, \"outputTokens\": [20, 43, 27], \"finishReasons\": [\"stop\", \"stop\", \"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 3,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "serial_orders_reviews",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 21.25,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1135,
+        "output": 19,
+        "cacheRead": 0,
+        "cacheWrite": 1135,
+        "totalTokens": 1154,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 3,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 3,
+        "swarm_tokens": 3699
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501936509,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781501936512,
+          "tool": "review_summary",
+          "args": {
+            "product": "laptop-pro"
+          },
+          "status": "ok",
+          "result": "REVIEW_SENTIMENT=POSITIVE PRODUCT=laptop-pro\nUNTRUSTED_DIAGNOSTIC_NOISE retry_count=2 trace_id=abc cache_warning=stale"
+        },
+        {
+          "timestamp": 1781501942270,
+          "tool": "fetch_orders",
+          "args": {
+            "customer_id": "cust-42"
+          },
+          "status": "ok",
+          "result": "ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"
+        }
+      ],
+      "final_text": "[resolve_customer]\nresolve_customer({\"customer\":\"Alice\"}) => CUSTOMER_ID=cust-42 CUSTOMER=Alice\n\n[review_summary]\nreview_summary({\"product\":\"laptop-pro\"}) => REVIEW_SENTIMENT=POSITIVE PRODUCT=laptop-pro\n\n[fetch_orders]\nfetch_orders({\"customer_id\":\"cust-42\"}) => ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-resolve_customer-pgyndg-A\", \"swarm-branch-rcg-review_summary-1k6lgvn-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1135, 1138], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 8.769, \"outputTokens\": [19, 21], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-fetch_orders-34u8hz-A\"], \"maxTokens\": [128], \"promptTokens\": [1363], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.087, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 3,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "partial_401",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 17.292,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1146,
+        "output": 19,
+        "cacheRead": 0,
+        "cacheWrite": 1146,
+        "totalTokens": 1165,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 2,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 2,
+        "swarm_tokens": 2332
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501959624,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781501959624,
+          "tool": "billing_status",
+          "args": {
+            "account_id": "acct-9"
+          },
+          "status": "error",
+          "result": "401 Unauthorized: billing API credential expired"
+        }
+      ],
+      "final_text": "TASK_STATUS: COMPLETE_WITH_REPORTED_FAILURE\nThe swarm completed the truthful response using verified successes and attributed failure evidence.\nFAILED_STEPS:\n- rcg-billing_status-sgnx7r | billing_status | auth_or_quota | recovery=abandon_tool_for_this_task_and_report_auth_failure\nRequired response: preserve verified partial evidence, identify failed components precisely, and never invent a successful tool result.\n\nVERIFIED_PARTIAL_RESULTS:\n- resolve_customer: resolve_customer({\"customer\":\"Alice\"}) => CUSTOMER_ID=cust-42 CUSTOMER=Alice\n- billing_status: billing_status({\"account_id\":\"acct-9\"}) => 401 Unauthorized: billing API credential expired",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-resolve_customer-pgyndg-A\", \"swarm-branch-rcg-billing_status-sgnx7r-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1146, 1145], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 10.515, \"outputTokens\": [19, 22], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 2,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "long_chain_budget",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 37.784,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1164,
+        "output": 19,
+        "cacheRead": 0,
+        "cacheWrite": 1164,
+        "totalTokens": 1183,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 5,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 5,
+        "swarm_tokens": 6712
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501976765,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781501976765,
+          "tool": "get_weather",
+          "args": {
+            "city": "Berlin"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=Berlin"
+        },
+        {
+          "timestamp": 1781501982407,
+          "tool": "fetch_orders",
+          "args": {
+            "customer_id": "cust-42"
+          },
+          "status": "ok",
+          "result": "ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"
+        },
+        {
+          "timestamp": 1781501988837,
+          "tool": "fetch_order_total",
+          "args": {
+            "order_ids": "ord-7,ord-8"
+          },
+          "status": "ok",
+          "result": "ORDER_TOTAL=125 ORDER_IDS=ord-7,ord-8"
+        },
+        {
+          "timestamp": 1781501996481,
+          "tool": "check_budget",
+          "args": {
+            "order_total": 125,
+            "limit": 200
+          },
+          "status": "ok",
+          "result": "BUDGET_STATUS=WITHIN_LIMIT ORDER_TOTAL=125 LIMIT=200"
+        }
+      ],
+      "final_text": "[resolve_customer]\nresolve_customer({\"customer\":\"Alice\"}) => CUSTOMER_ID=cust-42 CUSTOMER=Alice\n\n[get_weather]\nget_weather({\"city\":\"Berlin\"}) => WEATHER_CONDITION=SUNNY CITY=Berlin\n\n[fetch_orders]\nfetch_orders({\"customer_id\":\"cust-42\"}) => ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42\n\n[fetch_order_total]\nfetch_order_total({\"order_ids\":\"ord-7,ord-8\"}) => ORDER_TOTAL=125 ORDER_IDS=ord-7,ord-8\n\n[check_budget]\ncheck_budget({\"limit\":200,\"order_total\":125}) => BUDGET_STATUS=WITHIN_LIMIT ORDER_TOTAL=125 LIMIT=200",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-resolve_customer-pgyndg-A\", \"swarm-branch-rcg-get_weather-1v0dkka-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1164, 1153], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 10.323, \"outputTokens\": [19, 19], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-fetch_orders-34u8hz-A\"], \"maxTokens\": [128], \"promptTokens\": [1335], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.017, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-fetch_order_total-rmd2ah-A\"], \"maxTokens\": [128], \"promptTokens\": [1428], \"cacheReadTokens\": [705]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.703, \"outputTokens\": [27], \"finishReasons\": [\"stop\"], \"cacheEntries\": 4}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-check_budget-etdoz6-A\"], \"maxTokens\": [128], \"promptTokens\": [1514], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 6.578, \"outputTokens\": [30], \"finishReasons\": [\"stop\"], \"cacheEntries\": 5}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 5,
+      "total_tool_calls": 5,
+      "irrelevant_tools": []
+    }
+  ]
+}

@@ -19,6 +19,7 @@ import type {
 	AgentTool,
 	AgentToolCall,
 	AgentToolResult,
+	SpeculativeSwarmPrepareContext,
 	StreamFn,
 } from "./types.ts";
 
@@ -295,7 +296,7 @@ async function streamAssistantResponse(
 	const streamFunction = streamFn || streamSimple;
 
 	if (config.speculativeSwarm && !signal?.aborted) {
-		const enrichedContext = await config.speculativeSwarm.prepareContext({
+		const prepareInput: SpeculativeSwarmPrepareContext = {
 			context,
 			model: config.model,
 			thinkingLevel: config.reasoning ?? "off",
@@ -303,10 +304,24 @@ async function streamAssistantResponse(
 			streamFn: streamFunction,
 			signal,
 			requestIndex,
-		});
-		if (enrichedContext) {
-			context = enrichedContext;
-			messages = enrichedContext.messages;
+		};
+		if (config.speculativeSwarm.prepareTurn) {
+			const prepared = await config.speculativeSwarm.prepareTurn(prepareInput);
+			if (prepared?.response) {
+				await emit({ type: "message_start", message: { ...prepared.response } });
+				await emit({ type: "message_end", message: prepared.response });
+				return prepared.response;
+			}
+			if (prepared?.context) {
+				context = prepared.context;
+				messages = prepared.context.messages;
+			}
+		} else {
+			const enrichedContext = await config.speculativeSwarm.prepareContext(prepareInput);
+			if (enrichedContext) {
+				context = enrichedContext;
+				messages = enrichedContext.messages;
+			}
 		}
 	}
 
@@ -337,7 +352,6 @@ async function streamAssistantResponse(
 		switch (event.type) {
 			case "start":
 				partialMessage = event.partial;
-				context.messages.push(partialMessage);
 				addedPartial = true;
 				await emit({ type: "message_start", message: { ...partialMessage } });
 				break;
@@ -353,7 +367,6 @@ async function streamAssistantResponse(
 			case "toolcall_end":
 				if (partialMessage) {
 					partialMessage = event.partial;
-					context.messages[context.messages.length - 1] = partialMessage;
 					await emit({
 						type: "message_update",
 						assistantMessageEvent: event,
@@ -365,11 +378,6 @@ async function streamAssistantResponse(
 			case "done":
 			case "error": {
 				const finalMessage = await response.result();
-				if (addedPartial) {
-					context.messages[context.messages.length - 1] = finalMessage;
-				} else {
-					context.messages.push(finalMessage);
-				}
 				if (!addedPartial) {
 					await emit({ type: "message_start", message: { ...finalMessage } });
 				}

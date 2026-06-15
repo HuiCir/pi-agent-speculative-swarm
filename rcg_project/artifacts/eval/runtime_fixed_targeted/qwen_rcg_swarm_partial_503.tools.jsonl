@@ -1,0 +1,2 @@
+{"timestamp":1781501860482,"tool":"get_weather","args":{"city":"London"},"status":"ok","result":"WEATHER_CONDITION=SUNNY CITY=London"}
+{"timestamp":1781501860483,"tool":"inventory_status","args":{"sku":"SKU-404"},"status":"error","result":"503 Service Unavailable from inventory provider"}

@@ -5,6 +5,8 @@
  * createAgentSession() options. The SDK does the heavy lifting.
  */
 
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { type ImageContent, modelsAreEqual } from "@earendil-works/pi-ai";
 import { ProcessTerminal, setKeybindings, TUI } from "@earendil-works/pi-tui";
@@ -31,6 +33,7 @@ import type { ModelRegistry } from "./core/model-registry.ts";
 import { resolveCliModel, resolveModelScope, type ScopedModel } from "./core/model-resolver.ts";
 import { restoreStdout, takeOverStdout } from "./core/output-guard.ts";
 import type { CreateAgentSessionOptions } from "./core/sdk.ts";
+import { createLocalQwenModel } from "./core/local-qwen-runtime.ts";
 import {
 	formatMissingSessionCwdPrompt,
 	getMissingSessionCwdIssue,
@@ -429,42 +432,89 @@ function buildSessionOptions(
 		options.excludeTools = [...parsed.excludeTools];
 	}
 
-	if (parsed.swarm) {
-		let swarmModel = options.model;
-		const swarmModelPattern = parsed.swarmModel ?? "v4flash";
-		const resolvedSwarmModel = resolveCliModel({
-			cliModel: swarmModelPattern,
-			modelRegistry,
-		});
-		if (resolvedSwarmModel.model) {
-			swarmModel = resolvedSwarmModel.model;
-		} else if (parsed.swarmModel) {
+	const localNative = parsed.localQwen || parsed.swarm;
+	if (localNative) {
+		if (parsed.swarmModel) {
 			diagnostics.push({
 				type: "error",
-				message: resolvedSwarmModel.error ?? `Swarm model "${parsed.swarmModel}" not found`,
+				message:
+					"--swarm-model is disabled: main and subagents must share the same local Qwen3-8B runtime",
 			});
-		} else {
+		}
+		if (parsed.swarmRcgUrl) {
 			diagnostics.push({
-				type: "warning",
-				message: `Swarm model pattern "v4flash" was not found. Falling back to the main model for subagents.`,
+				type: "error",
+				message: "--swarm-rcg-url is disabled: RCG must reuse the native local Qwen encoder and KV runtime",
 			});
 		}
-		if (resolvedSwarmModel.warning) {
-			diagnostics.push({ type: "warning", message: resolvedSwarmModel.warning });
+		if (parsed.model || parsed.provider || parsed.models?.length) {
+			diagnostics.push({
+				type: "error",
+				message: "local Qwen mode does not accept provider models; use --local-model-path for Qwen3-8B",
+			});
 		}
-
-		options.speculativeSwarm = {
-			enabled: true,
-			model: swarmModel,
-			thinkingLevel: resolvedSwarmModel.thinkingLevel,
-			agents: parsed.swarmAgents,
-			rounds: parsed.swarmRounds,
-			maxSubagentTurns: parsed.swarmMaxTurns,
-			timeoutMs: parsed.swarmTimeoutMs,
-			toolPolicy: parsed.swarmToolPolicy,
-			allowBash: parsed.swarmAllowBash,
-			twoStage: true,
+		const rcgRoot = resolve(getPackageDir(), "../../rcg_project");
+		const modelPath = resolve(
+			parsed.localModelPath ??
+				parsed.swarmLocalModelPath ??
+				process.env.PI_LOCAL_QWEN_MODEL ??
+				resolve(process.cwd(), "models/qwen3-8b"),
+		);
+		const pythonPath = resolve(
+			parsed.localPython ??
+				parsed.swarmLocalPython ??
+				process.env.PI_LOCAL_QWEN_PYTHON ??
+				resolve(rcgRoot, ".venv/bin/python"),
+		);
+		const workerPath = resolve(rcgRoot, "local_qwen_rcg_worker.py");
+		const rcgCheckpoint = parsed.swarm
+			? resolve(
+					parsed.swarmLocalRcgCheckpoint ??
+						process.env.PI_LOCAL_RCG_CHECKPOINT ??
+						resolve(rcgRoot, "checkpoints/rcg_moe_opd_v1_harness_adapter_best.pt"),
+				)
+			: undefined;
+		const requiredPaths: Array<readonly [string, string]> = [
+			["Qwen3-8B model", modelPath],
+			["local Python", pythonPath],
+			["local runtime worker", workerPath],
+		];
+		if (rcgCheckpoint) {
+			requiredPaths.push(["RCG checkpoint", rcgCheckpoint]);
+		}
+		for (const [label, path] of requiredPaths) {
+			if (!existsSync(path)) {
+				diagnostics.push({ type: "error", message: `${label} does not exist: ${path}` });
+			}
+		}
+		const localModel = createLocalQwenModel(modelPath);
+		options.model = localModel;
+		options.scopedModels = [{ model: localModel, thinkingLevel: parsed.thinking }];
+		options.localQwenRuntime = {
+			pythonPath,
+			workerPath,
+			modelPath,
+			rcgCheckpoint,
+			cacheBytes: Math.round((parsed.localCacheGb ?? parsed.swarmLocalCacheGb ?? 8) * 1024 ** 3),
+			decodeConcurrency: parsed.swarm ? Math.max(1, parsed.swarmAgents?.length ?? 4) : 1,
+			prefillConcurrency: parsed.swarm ? Math.min(4, Math.max(1, parsed.swarmAgents?.length ?? 4)) : 1,
 		};
+
+		if (parsed.swarm) {
+			options.speculativeSwarm = {
+				enabled: true,
+				model: localModel,
+				thinkingLevel: parsed.thinking,
+				agents: parsed.swarmAgents,
+				rounds: parsed.swarmRounds,
+				maxSubagentTurns: parsed.swarmMaxTurns,
+				timeoutMs: parsed.swarmTimeoutMs,
+				toolPolicy: parsed.swarmToolPolicy,
+				executionMode: parsed.swarmExecutionMode,
+				allowBash: parsed.swarmAllowBash,
+				twoStage: true,
+			};
+		}
 	}
 
 	return { options, cliThinkingFromModel, diagnostics };
@@ -668,7 +718,12 @@ export async function main(args: string[], options?: MainOptions) {
 		);
 		diagnostics.push(...sessionOptionDiagnostics);
 
-		if (parsed.apiKey) {
+		if (parsed.apiKey && (parsed.localQwen || parsed.swarm)) {
+			diagnostics.push({
+				type: "error",
+				message: "--api-key is disabled in local-native Qwen mode",
+			});
+		} else if (parsed.apiKey) {
 			if (!sessionOptions.model) {
 				diagnostics.push({
 					type: "error",
@@ -691,6 +746,7 @@ export async function main(args: string[], options?: MainOptions) {
 			noTools: sessionOptions.noTools,
 			customTools: sessionOptions.customTools,
 			speculativeSwarm: sessionOptions.speculativeSwarm,
+			localQwenRuntime: sessionOptions.localQwenRuntime,
 		});
 		const cliThinkingOverride = parsed.thinking !== undefined || cliThinkingFromModel;
 		if (created.session.model && cliThinkingOverride) {

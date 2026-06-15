@@ -1,0 +1,2 @@
+{"timestamp":1781501873123,"tool":"inventory_status","args":{"sku":"SKU-404"},"status":"error","result":"503 Service Unavailable from inventory provider"}
+{"timestamp":1781501878209,"tool":"inventory_fallback","args":{"sku":"SKU-404"},"status":"ok","result":"INVENTORY_AVAILABLE=12 SKU=SKU-404 PROVIDER=fallback"}

@@ -1,0 +1,7 @@
+torch>=2.7,<3
+mlx==0.31.2
+mlx-lm==0.31.3
+transformers==5.6.2
+accelerate==1.13.0
+safetensors==0.7.0
+datasets==4.8.4

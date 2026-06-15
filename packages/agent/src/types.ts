@@ -147,12 +147,20 @@ export interface SpeculativeSwarmPrepareContext {
 	requestIndex: number;
 }
 
+export interface SpeculativeSwarmPrepareResult {
+	/** Optional enriched context used when the main model still needs to run. */
+	context?: AgentContext;
+	/** Optional complete assistant response that bypasses the main provider call. */
+	response?: AssistantMessage;
+}
+
 /**
  * Optional controller that can run speculative subagents before the main model
  * request and return an enriched context for the orchestrator/executor turn.
  */
 export interface SpeculativeSwarmController {
 	prepareContext(input: SpeculativeSwarmPrepareContext): Promise<AgentContext | undefined>;
+	prepareTurn?(input: SpeculativeSwarmPrepareContext): Promise<SpeculativeSwarmPrepareResult | undefined>;
 }
 
 export interface PrepareNextTurnContext extends ShouldStopAfterTurnContext {}

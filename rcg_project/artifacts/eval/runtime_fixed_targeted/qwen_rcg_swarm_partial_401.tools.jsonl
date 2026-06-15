@@ -1,0 +1,2 @@
+{"timestamp":1781501959624,"tool":"resolve_customer","args":{"customer":"Alice"},"status":"ok","result":"CUSTOMER_ID=cust-42 CUSTOMER=Alice"}
+{"timestamp":1781501959624,"tool":"billing_status","args":{"account_id":"acct-9"},"status":"error","result":"401 Unauthorized: billing API credential expired"}

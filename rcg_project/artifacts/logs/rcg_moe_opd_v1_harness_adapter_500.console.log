@@ -1,0 +1,34 @@
+OPD V1 rows=10648 train=9804 eval=844 schedule=500
+Loaded OPD encoder cache cache/rcg_moe_opd_v1_qwen_full.pt
+Initialized from checkpoints/rcg_moe_opd_v1_coupled_calibrated_latest.pt step=700
+RCG-MoE-OPD V1 parameters={'shared': 25212928, 'planner': 23140427, 'outcome': 15232019, 'orchestration': 12605447, 'total': 76190821}
+Raw validation score=0.7185 plan=0.7876/0.9012 coherence=0.7520 failure=0.8337
+Entering phase=planner step=1
+Step 25/500 phase=planner loss=1.9323 grad=38.811 peak=1.34GB
+Step 50/500 phase=planner loss=1.6038 grad=31.110 peak=1.35GB
+Step 75/500 phase=planner loss=1.4013 grad=25.026 peak=1.35GB
+Step 100/500 phase=planner loss=1.4606 grad=24.834 peak=1.35GB
+Validation step=100 score=0.7233 plan=0.8747/0.7923/0.2000 count=0.2650 wave=0.9100 complete=0.8250
+Updated best checkpoint step=100 score=0.7233
+Step 125/500 phase=planner loss=1.5236 grad=33.236 peak=1.35GB
+Step 150/500 phase=planner loss=1.5486 grad=45.199 peak=1.35GB
+Step 175/500 phase=planner loss=1.2580 grad=28.096 peak=1.35GB
+Step 200/500 phase=planner loss=1.1645 grad=18.547 peak=1.35GB
+Validation step=200 score=0.7258 plan=0.8754/0.7944/0.2150 count=0.2850 wave=0.9100 complete=0.8250
+Updated best checkpoint step=200 score=0.7258
+Step 225/500 phase=planner loss=1.2192 grad=29.296 peak=1.35GB
+Step 250/500 phase=planner loss=1.0397 grad=19.169 peak=1.35GB
+Step 275/500 phase=planner loss=1.0496 grad=18.422 peak=1.35GB
+Step 300/500 phase=planner loss=0.9368 grad=14.593 peak=1.35GB
+Validation step=300 score=0.7187 plan=0.8655/0.7849/0.1900 count=0.2600 wave=0.9100 complete=0.8300
+Step 325/500 phase=planner loss=0.9752 grad=23.154 peak=1.35GB
+Step 350/500 phase=planner loss=0.9303 grad=20.474 peak=1.35GB
+Step 375/500 phase=planner loss=0.9046 grad=18.611 peak=1.35GB
+Step 400/500 phase=planner loss=0.8520 grad=19.614 peak=1.35GB
+Validation step=400 score=0.7111 plan=0.8778/0.7548/0.1600 count=0.2250 wave=0.9150 complete=0.8300
+Step 425/500 phase=planner loss=0.8071 grad=15.586 peak=1.35GB
+Step 450/500 phase=planner loss=0.8128 grad=15.428 peak=1.35GB
+Step 475/500 phase=planner loss=0.7478 grad=9.858 peak=1.35GB
+Step 500/500 phase=planner loss=0.6774 grad=8.627 peak=1.35GB
+Validation step=500 score=0.7137 plan=0.8905/0.7539/0.1650 count=0.2300 wave=0.9100 complete=0.8300
+Finished RCG-MoE-OPD V1 steps=500 best=0.7258 elapsed=0.03h

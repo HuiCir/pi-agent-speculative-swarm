@@ -39,3 +39,14 @@ plans/
 .pi/hf-sessions/
 .pi/hf-sessions-backup/
 collect.sh
+
+# RCG local runtime and generated artifacts
+rcg_project/.venv/
+rcg_project/cache/
+rcg_project/data/
+rcg_project/checkpoints/*.pt
+rcg_project/checkpoints/*.pth
+rcg_project/__pycache__/
+rcg_project/rcg/__pycache__/
+rcg_project/**/*.pyc
+!rcg_project/artifacts/logs/*.console.log

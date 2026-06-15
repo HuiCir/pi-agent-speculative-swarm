@@ -11,6 +11,11 @@ import type { ExtensionRunner, LoadExtensionsResult, SessionStartEvent, ToolDefi
 import { convertToLlm } from "./messages.ts";
 import { ModelRegistry } from "./model-registry.ts";
 import { findInitialModel } from "./model-resolver.ts";
+import {
+	isLocalQwenModel,
+	LocalQwenRuntime,
+	type LocalQwenRuntimeOptions,
+} from "./local-qwen-runtime.ts";
 import type { ResourceLoader } from "./resource-loader.ts";
 import { DefaultResourceLoader } from "./resource-loader.ts";
 import { getDefaultSessionDir, SessionManager } from "./session-manager.ts";
@@ -81,6 +86,8 @@ export interface CreateAgentSessionOptions {
 	settingsManager?: SettingsManager;
 	/** Optional source-level residual speculative swarm controller. */
 	speculativeSwarm?: Omit<SpeculativeSwarmRuntimeOptions, "model"> & { model?: Model<any> };
+	/** Persistent native Qwen runtime shared by main, swarm, KV cache, and RCG. */
+	localQwenRuntime?: LocalQwenRuntimeOptions;
 	/** Session start event metadata for extension runtime startup. */
 	sessionStartEvent?: SessionStartEvent;
 }
@@ -330,6 +337,10 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 	};
 
 	const extensionRunnerRef: { current?: ExtensionRunner } = {};
+	const localQwenRuntime = options.localQwenRuntime ? new LocalQwenRuntime(options.localQwenRuntime) : undefined;
+	if (isLocalQwenModel(model) && !localQwenRuntime) {
+		throw new Error("The local Qwen model requires localQwenRuntime configuration");
+	}
 
 	agent = new Agent({
 		initialState: {
@@ -340,6 +351,12 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		},
 		convertToLlm: convertToLlmWithBlockImages,
 		streamFn: async (model, context, options) => {
+			if (isLocalQwenModel(model)) {
+				if (!localQwenRuntime) {
+					throw new Error("Local Qwen runtime is not configured");
+				}
+				return localQwenRuntime.stream(model, context, options);
+			}
 			const auth = await modelRegistry.getApiKeyAndHeaders(model);
 			if (!auth.ok) {
 				throw new Error(auth.error);
@@ -399,7 +416,11 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				? createSpeculativeSwarmController({
 						...options.speculativeSwarm,
 						enabled: options.speculativeSwarm.enabled ?? true,
-						model: options.speculativeSwarm.model ?? model,
+						model: localQwenRuntime ? model : (options.speculativeSwarm.model ?? model),
+						dynamicPolicy:
+							localQwenRuntime && options.localQwenRuntime?.rcgCheckpoint
+								? localQwenRuntime
+								: options.speculativeSwarm.dynamicPolicy,
 					})
 				: undefined,
 	});
@@ -432,6 +453,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		excludedToolNames,
 		extensionRunnerRef,
 		sessionStartEvent: options.sessionStartEvent,
+		onDispose: () => localQwenRuntime?.dispose(),
 	});
 	const extensionsResult = resourceLoader.getExtensions();
 

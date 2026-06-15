@@ -1,89 +1,121 @@
-<p align="center">
-  <a href="https://pi.dev">
-    <img alt="pi logo" src="https://pi.dev/logo-auto.svg" width="128">
-  </a>
-</p>
-<p align="center">
-  <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
-</p>
-<p align="center">
-  <a href="https://pi.dev">pi.dev</a> domain graciously donated by
-  <br /><br />
-  <a href="https://exe.dev"><img src="packages/coding-agent/docs/images/exy.png" alt="Exy mascot" width="48" /><br />exe.dev</a>
-</p>
+# RCG Speculative Swarm
 
-> New issues and PRs from new contributors are auto-closed by default. Maintainers review auto-closed issues daily. See [CONTRIBUTING.md](CONTRIBUTING.md).
+This repository integrates a trained RCG controller with the Pi agent harness
+and a single native Qwen3-8B runtime. RCG plans distinct tool paths, scores
+execution coherence, transfers verified residual evidence between waves, and
+can promote a complete swarm result directly to the main answer.
 
----
+The base model is not duplicated. Main-agent generation, subagents, KV cache,
+and RCG embeddings share one local Qwen3-8B process.
 
-# Pi Agent Harness Mono Repo
+## Included
 
-This is the home of the pi agent harness project including our self extensible coding agent.
+- Full Pi monorepo snapshot with the speculative swarm integration.
+- RCG-MoE-OPD V1 controller and training pipeline.
+- Coupled path selection, outcome scoring, recovery routing, and takeover.
+- Native MLX Qwen runtime with shared prompt/KV cache.
+- Final training logs, validation summaries, and benchmark traces.
+- Release assets for the selected checkpoint and generated training dataset.
 
-* **[@earendil-works/pi-coding-agent](packages/coding-agent)**: Interactive coding agent CLI
-* **[@earendil-works/pi-agent-core](packages/agent)**: Agent runtime with tool calling and state management
-* **[@earendil-works/pi-ai](packages/ai)**: Unified multi-provider LLM API (OpenAI, Anthropic, Google, …)
+See [RCG_SPECULATIVE_SWARM.md](RCG_SPECULATIVE_SWARM.md) for the runtime design
+and [rcg_project/README.md](rcg_project/README.md) for training details.
 
-To learn more about pi:
+## Validated Snapshot
 
-* [Visit pi.dev](https://pi.dev), the project website with demos
-* [Read the documentation](https://pi.dev/docs/latest), but you can also ask the agent to explain itself
+Selected checkpoint:
 
-## Share your OSS coding agent sessions
+| Field | Value |
+| --- | --- |
+| Architecture | `rcg_moe_opd_v1_coupled` |
+| Checkpoint version | 13 |
+| Selected step | 200 |
+| RCG parameters | 76,190,821 |
+| Validation composite | 0.725805 |
+| SHA-256 | `5b5a720b50a2fdaf5f7b1ec7457dbcf0513a40d2e58d81aae7cef719980358ae` |
 
-If you use pi or other coding agents for open source work, please share your sessions.
+Controlled seven-case local Qwen3-8B agent harness:
 
-Public OSS session data helps improve coding agents with real-world tasks, tool use, failures, and fixes instead of toy benchmarks.
+| System | Success | Mean main turns | Mean latency | Direct takeover |
+| --- | ---: | ---: | ---: | ---: |
+| Qwen3-8B Pi base | 100% | 3.143 | 28.611 s | 0% |
+| Qwen3-8B + RCG swarm | 100% | 1.000 | 22.978 s | 100% |
 
-For the full explanation, see [this post on X](https://x.com/badlogicgames/status/2037811643774652911).
+In this harness, RCG reduced mean latency by 19.7% (`1.245x`) while preserving
+task success, tool coverage, dependency accuracy, failure attribution, and
+hallucination-free scoring. This is a focused integration benchmark, not a
+claim of broad production generalization. The long-chain case remained slower
+because multi-wave execution was limited by local hardware.
 
-To publish sessions, use [`badlogic/pi-share-hf`](https://github.com/badlogic/pi-share-hf). Read its README.md for setup instructions. All you need is a Hugging Face account, the Hugging Face CLI, and `pi-share-hf`.
+## Quick Start
 
-You can also watch [this video](https://x.com/badlogicgames/status/2041151967695634619), where I show how I publish my `pi-mono` sessions.
+Requirements:
 
-I regularly publish my own `pi-mono` work sessions here:
-
-- [badlogicgames/pi-mono on Hugging Face](https://huggingface.co/datasets/badlogicgames/pi-mono)
-
-## All Packages
-
-| Package | Description |
-|---------|-------------|
-| **[@earendil-works/pi-ai](packages/ai)** | Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.) |
-| **[@earendil-works/pi-agent-core](packages/agent)** | Agent runtime with tool calling and state management |
-| **[@earendil-works/pi-coding-agent](packages/coding-agent)** | Interactive coding agent CLI |
-| **[@earendil-works/pi-tui](packages/tui)** | Terminal UI library with differential rendering |
-
-For Slack/chat automation and workflows see [earendil-works/pi-chat](https://github.com/earendil-works/pi-chat).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and [AGENTS.md](AGENTS.md) for project-specific rules (for both humans and agents).
-
-## Development
+- Node.js 22.19 or newer
+- Qwen3-8B in Hugging Face format
+- macOS Apple Silicon for the included MLX runtime
+- Python with PyTorch, `mlx`, and `mlx-lm`
 
 ```bash
-npm install --ignore-scripts  # Install all dependencies without running lifecycle scripts
-npm run build        # Build all packages
-npm run check        # Lint, format, and type check
-./test.sh            # Run tests (skips LLM-dependent tests without API keys)
-./pi-test.sh         # Run pi from sources (can be run from any directory)
+npm ci --ignore-scripts
+npm run build
+
+python3 -m venv rcg_project/.venv
+rcg_project/.venv/bin/pip install -r rcg_project/requirements-local.txt
+
+gh release download rcg-moe-opd-v1-v13 \
+  --pattern rcg_moe_opd_v1_harness_adapter_best.pt \
+  --dir rcg_project/checkpoints
 ```
 
-## Supply-chain hardening
+Run the native Qwen + RCG swarm:
 
-We treat npm dependency changes as reviewed code changes.
+```bash
+./pi-test.sh \
+  --swarm \
+  --swarm-local-model-path /path/to/Qwen3-8B \
+  --swarm-local-python rcg_project/.venv/bin/python \
+  --swarm-local-rcg-checkpoint \
+    rcg_project/checkpoints/rcg_moe_opd_v1_harness_adapter_best.pt \
+  --mode text \
+  --no-session \
+  -p "Your tool-using task"
+```
 
-- Direct external dependencies are pinned to exact versions. Internal workspace packages remain version-ranged.
-- `.npmrc` sets `save-exact=true` and `min-release-age=2` to avoid same-day dependency releases during npm resolution.
-- `package-lock.json` is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless `PI_ALLOW_LOCKFILE_CHANGE=1` is set.
-- `npm run check` verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap.
-- The published CLI package includes `packages/coding-agent/npm-shrinkwrap.json`, generated from the root lockfile, to pin transitive deps for npm users.
-- Release smoke tests use `npm run release:local` to build, pack, and create isolated npm and Bun installs outside the repo before tagging a release.
-- Local release installs, documented npm installs, and `pi update --self` use `--ignore-scripts` where supported.
-- CI installs with `npm ci --ignore-scripts`, and a scheduled GitHub workflow runs `npm audit --omit=dev` plus `npm audit signatures --omit=dev`.
-- Shrinkwrap generation has an explicit allowlist for dependency lifecycle scripts; new lifecycle-script deps fail checks until reviewed.
+The non-swarm local baseline uses the same model and runtime:
 
-## License
+```bash
+./pi-test.sh \
+  --local-qwen \
+  --local-model-path /path/to/Qwen3-8B \
+  --local-python rcg_project/.venv/bin/python \
+  --mode text \
+  --no-session \
+  -p "Your tool-using task"
+```
 
-MIT
+## Verification
+
+```bash
+npm --prefix packages/coding-agent test -- \
+  test/speculative-swarm.test.ts \
+  test/local-qwen-runtime.test.ts
+npm run build
+
+rcg_project/.venv/bin/python -m py_compile \
+  rcg_project/*.py rcg_project/rcg/*.py
+```
+
+## Layout
+
+- `packages/coding-agent/src/core/speculative-swarm.ts`: swarm orchestration.
+- `packages/coding-agent/src/core/local-qwen-runtime.ts`: shared native runtime.
+- `rcg_project/rcg/moe_opd_controller.py`: trainable RCG controller.
+- `rcg_project/train_rcg_moe_opd_v1.py`: phased/coupled training.
+- `rcg_project/rcg_policy_server.py`: checkpoint inference and routing.
+- `rcg_project/artifacts`: selected logs and evaluation evidence.
+
+## Attribution
+
+The agent harness is derived from the Pi monorepo and remains under the MIT
+license. RCG-specific integration and training code is included in this
+snapshot under the same repository license.

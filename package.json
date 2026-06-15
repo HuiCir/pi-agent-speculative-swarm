@@ -51,6 +51,7 @@
 	},
 	"version": "0.0.3",
 	"overrides": {
+		"shell-quote": "1.8.4",
 		"rimraf": "6.1.2",
 		"gaxios": {
 			"rimraf": "6.1.2"

@@ -301,6 +301,39 @@ describe("Agent", () => {
 		expect(agent.state.messages).not.toContainEqual(message);
 	});
 
+	it("should stop gracefully after one turn and resume from queued steering", async () => {
+		let responseCount = 0;
+		const agent = new Agent({
+			streamFn: () => {
+				const stream = new MockAssistantStream();
+				responseCount++;
+				queueMicrotask(() => {
+					stream.push({
+						type: "done",
+						reason: "stop",
+						message: createAssistantMessage(`Stage ${responseCount}`),
+					});
+				});
+				return stream;
+			},
+			shouldStopAfterTurn: () => true,
+		});
+
+		await agent.prompt("Run stage one");
+		expect(responseCount).toBe(1);
+		expect(agent.state.messages[agent.state.messages.length - 1].role).toBe("assistant");
+
+		agent.steer({
+			role: "user",
+			content: [{ type: "text", text: "Dependency result from branch A" }],
+			timestamp: Date.now(),
+		});
+		await agent.continue();
+
+		expect(responseCount).toBe(2);
+		expect(agent.state.messages.slice(-2).map((message) => message.role)).toEqual(["user", "assistant"]);
+	});
+
 	it("should handle abort controller", () => {
 		const agent = new Agent();
 

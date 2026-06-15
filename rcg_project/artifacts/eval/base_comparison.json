@@ -1,0 +1,1165 @@
+{
+  "model": "/Users/migraine/models/qwen3-8b",
+  "checkpoint": "/Users/migraine/Downloads/orch/rcg/outputs/server_latest/rcg_project/checkpoints/rcg_moe_opd_v1_harness_adapter_best.pt",
+  "systems": {
+    "qwen_pi_base": {
+      "cases": 7,
+      "task_success_rate": 1.0,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "dependency_accuracy": 1.0,
+      "failure_attribution_accuracy": 1.0,
+      "hallucination_free_rate": 1.0,
+      "mean_latency_s": 28.610999999999997,
+      "mean_main_turns": 3.142857142857143,
+      "mean_tool_calls": 3.0,
+      "main_tokens": 36380,
+      "swarm_tokens": 0,
+      "dependency_transfers": 0,
+      "mean_main_model_generations": 3.142857142857143,
+      "direct_takeover_rate": 0.0,
+      "main_generation_tokens": 36380
+    },
+    "qwen_rcg_swarm": {
+      "cases": 7,
+      "task_success_rate": 0.8571428571428571,
+      "tool_coverage": 0.9285714285714286,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 0.8571428571428571,
+      "dependency_accuracy": 0.8571428571428571,
+      "failure_attribution_accuracy": 1.0,
+      "hallucination_free_rate": 1.0,
+      "mean_latency_s": 46.30885714285715,
+      "mean_main_turns": 1.4285714285714286,
+      "mean_tool_calls": 3.4285714285714284,
+      "main_tokens": 19625,
+      "swarm_tokens": 25473,
+      "dependency_transfers": 2,
+      "mean_main_model_generations": 1.0,
+      "direct_takeover_rate": 0.42857142857142855,
+      "main_generation_tokens": 16143
+    }
+  },
+  "rows": [
+    {
+      "system": "qwen_pi_base",
+      "task_id": "parallel_travel",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 37.051,
+      "main_assistant_turns": 2,
+      "main_model_generations": 2,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 3226,
+        "output": 198,
+        "cacheRead": 1523,
+        "cacheWrite": 1703,
+        "totalTokens": 3424,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 3226,
+        "output": 198,
+        "cacheRead": 1523,
+        "cacheWrite": 1703,
+        "totalTokens": 3424,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 0,
+        "retained": 0,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 0,
+        "swarm_tokens": 0
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500734499,
+          "tool": "get_weather",
+          "args": {
+            "city": "Tokyo"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=Tokyo"
+        },
+        {
+          "timestamp": 1781500734499,
+          "tool": "search_flights",
+          "args": {
+            "origin": "SFO",
+            "destination": "Tokyo",
+            "date": "2026-07-02"
+          },
+          "status": "ok",
+          "result": "FLIGHT_ID=DS204 ORIGIN=SFO DESTINATION=Tokyo DATE=2026-07-02"
+        },
+        {
+          "timestamp": 1781500734499,
+          "tool": "get_fx_rate",
+          "args": {
+            "base": "USD",
+            "quote": "JPY"
+          },
+          "status": "ok",
+          "result": "FX_RATE=157.25 BASE=USD QUOTE=JPY"
+        }
+      ],
+      "final_text": "Here are the results for the requested actions:\n\n1. **Tokyo Weather**: The weather condition in Tokyo is **SUNNY**.\n2. **Flight Search**: A flight with ID **DS204** is available from **SFO** to **Tokyo** on **2026-07-02**.\n3. **USD/JPY Exchange Rate**: The exchange rate is **157.25** (1 USD = 157.25 JPY).",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b7-9bcb-765f-a5db-0591e8ab76fc\"], \"maxTokens\": [512], \"promptTokens\": [1527], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 16.131, \"outputTokens\": [92], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b7-9bcb-765f-a5db-0591e8ab76fc\"], \"maxTokens\": [512], \"promptTokens\": [1699], \"cacheReadTokens\": [1523]}\n[local-qwen-rcg] generate complete {\"seconds\": 15.892, \"outputTokens\": [106], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 3,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_pi_base",
+      "task_id": "serial_orders_reviews",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 27.329,
+      "main_assistant_turns": 4,
+      "main_model_generations": 4,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 6355,
+        "output": 124,
+        "cacheRead": 4663,
+        "cacheWrite": 1692,
+        "totalTokens": 6479,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 6355,
+        "output": 124,
+        "cacheRead": 4663,
+        "cacheWrite": 1692,
+        "totalTokens": 6479,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 0,
+        "retained": 0,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 0,
+        "swarm_tokens": 0
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500761317,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781500765122,
+          "tool": "fetch_orders",
+          "args": {
+            "customer_id": "cust-42"
+          },
+          "status": "ok",
+          "result": "ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"
+        },
+        {
+          "timestamp": 1781500768641,
+          "tool": "review_summary",
+          "args": {
+            "product": "laptop-pro"
+          },
+          "status": "ok",
+          "result": "REVIEW_SENTIMENT=POSITIVE PRODUCT=laptop-pro\nUNTRUSTED_DIAGNOSTIC_NOISE retry_count=2 trace_id=abc cache_warning=stale"
+        }
+      ],
+      "final_text": "{\n  \"customer\": \"Alice\",\n  \"customer_id\": \"cust-42\",\n  \"orders\": [\"ord-7\", \"ord-8\"],\n  \"product_reviews\": {\n    \"product\": \"laptop-pro\",\n    \"review_sentiment\": \"POSITIVE\"\n  }\n}",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b8-2c82-7e21-af05-ef0bbc8b7404\"], \"maxTokens\": [512], \"promptTokens\": [1510], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.926, \"outputTokens\": [19], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b8-2c82-7e21-af05-ef0bbc8b7404\"], \"maxTokens\": [512], \"promptTokens\": [1555], \"cacheReadTokens\": [1506]}\n[local-qwen-rcg] generate complete {\"seconds\": 3.804, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b8-2c82-7e21-af05-ef0bbc8b7404\"], \"maxTokens\": [512], \"promptTokens\": [1610], \"cacheReadTokens\": [1551]}\n[local-qwen-rcg] generate complete {\"seconds\": 3.517, \"outputTokens\": [21], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b8-2c82-7e21-af05-ef0bbc8b7404\"], \"maxTokens\": [512], \"promptTokens\": [1680], \"cacheReadTokens\": [1606]}\n[local-qwen-rcg] generate complete {\"seconds\": 9.073, \"outputTokens\": [61], \"finishReasons\": [\"stop\"], \"cacheEntries\": 4}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 3,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_pi_base",
+      "task_id": "serial_route_weather",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 31.671,
+      "main_assistant_turns": 3,
+      "main_model_generations": 3,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 4926,
+        "output": 158,
+        "cacheRead": 3167,
+        "cacheWrite": 1759,
+        "totalTokens": 5084,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 4926,
+        "output": 158,
+        "cacheRead": 3167,
+        "cacheWrite": 1759,
+        "totalTokens": 5084,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 0,
+        "retained": 0,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 0,
+        "swarm_tokens": 0
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500794859,
+          "tool": "geocode",
+          "args": {
+            "place": "Golden Gate Bridge"
+          },
+          "status": "ok",
+          "result": "PLACE=Golden Gate Bridge LAT=37.8199 LON=-122.4783"
+        },
+        {
+          "timestamp": 1781500794859,
+          "tool": "geocode",
+          "args": {
+            "place": "Ferry Building"
+          },
+          "status": "ok",
+          "result": "PLACE=Ferry Building LAT=37.7955 LON=-122.3937"
+        },
+        {
+          "timestamp": 1781500794859,
+          "tool": "get_weather",
+          "args": {
+            "city": "San Francisco"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=San Francisco"
+        },
+        {
+          "timestamp": 1781500805043,
+          "tool": "route_time",
+          "args": {
+            "origin_lat": 37.8199,
+            "origin_lon": -122.4783,
+            "destination_lat": 37.7955,
+            "destination_lon": -122.3937
+          },
+          "status": "ok",
+          "result": "ROUTE_MINUTES=24 MODE=drive"
+        }
+      ],
+      "final_text": "The route from the Golden Gate Bridge to the Ferry Building takes 24 minutes by car. The weather in San Francisco is sunny.",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b8-9741-7eab-a248-6a0843f55a86\"], \"maxTokens\": [512], \"promptTokens\": [1514], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 12.128, \"outputTokens\": [64], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b8-9741-7eab-a248-6a0843f55a86\"], \"maxTokens\": [512], \"promptTokens\": [1661], \"cacheReadTokens\": [1510]}\n[local-qwen-rcg] generate complete {\"seconds\": 10.182, \"outputTokens\": [67], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b8-9741-7eab-a248-6a0843f55a86\"], \"maxTokens\": [512], \"promptTokens\": [1751], \"cacheReadTokens\": [1657]}\n[local-qwen-rcg] generate complete {\"seconds\": 4.346, \"outputTokens\": [27], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 4,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_pi_base",
+      "task_id": "partial_503",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 21.226,
+      "main_assistant_turns": 2,
+      "main_model_generations": 2,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 3126,
+        "output": 86,
+        "cacheRead": 1519,
+        "cacheWrite": 1607,
+        "totalTokens": 3212,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 3126,
+        "output": 86,
+        "cacheRead": 1519,
+        "cacheWrite": 1607,
+        "totalTokens": 3212,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 0,
+        "retained": 0,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 0,
+        "swarm_tokens": 0
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500823997,
+          "tool": "inventory_status",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "error",
+          "result": "503 Service Unavailable from inventory provider"
+        },
+        {
+          "timestamp": 1781500823998,
+          "tool": "get_weather",
+          "args": {
+            "city": "London"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=London"
+        }
+      ],
+      "final_text": "The inventory check for SKU-404 failed with a 503 Service Unavailable error. However, the weather in London is sunny. The overall request is partially resolved due to the inventory tool failure.",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-1306-7457-b1b7-24aaf0d97435\"], \"maxTokens\": [512], \"promptTokens\": [1523], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 9.503, \"outputTokens\": [43], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-1306-7457-b1b7-24aaf0d97435\"], \"maxTokens\": [512], \"promptTokens\": [1603], \"cacheReadTokens\": [1519]}\n[local-qwen-rcg] generate complete {\"seconds\": 6.612, \"outputTokens\": [43], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 2,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_pi_base",
+      "task_id": "partial_401",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 24.322,
+      "main_assistant_turns": 2,
+      "main_model_generations": 2,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 3124,
+        "output": 111,
+        "cacheRead": 1517,
+        "cacheWrite": 1607,
+        "totalTokens": 3235,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 3124,
+        "output": 111,
+        "cacheRead": 1517,
+        "cacheWrite": 1607,
+        "totalTokens": 3235,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 0,
+        "retained": 0,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 0,
+        "swarm_tokens": 0
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500844885,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781500844886,
+          "tool": "billing_status",
+          "args": {
+            "account_id": "acct-9"
+          },
+          "status": "error",
+          "result": "401 Unauthorized: billing API credential expired"
+        }
+      ],
+      "final_text": "The customer \"Alice\" has been resolved with customer ID `cust-42`.\n\nThe billing status check for account `acct-9` failed with a 401 Unauthorized error: \"billing API credential expired\". This indicates an authentication failure, and the billing state cannot be determined. Please ensure valid credentials are used for the billing API.",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-65fb-7be5-92c3-b3330be0b294\"], \"maxTokens\": [512], \"promptTokens\": [1521], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 9.194, \"outputTokens\": [42], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-65fb-7be5-92c3-b3330be0b294\"], \"maxTokens\": [512], \"promptTokens\": [1603], \"cacheReadTokens\": [1517]}\n[local-qwen-rcg] generate complete {\"seconds\": 10.058, \"outputTokens\": [69], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 2,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_pi_base",
+      "task_id": "long_chain_budget",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 34.608,
+      "main_assistant_turns": 6,
+      "main_model_generations": 6,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 10018,
+        "output": 153,
+        "cacheRead": 8197,
+        "cacheWrite": 1821,
+        "totalTokens": 10171,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 10018,
+        "output": 153,
+        "cacheRead": 8197,
+        "cacheWrite": 1821,
+        "totalTokens": 10171,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 0,
+        "retained": 0,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 0,
+        "swarm_tokens": 0
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500866699,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781500870523,
+          "tool": "fetch_orders",
+          "args": {
+            "customer_id": "cust-42"
+          },
+          "status": "ok",
+          "result": "ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"
+        },
+        {
+          "timestamp": 1781500875045,
+          "tool": "fetch_order_total",
+          "args": {
+            "order_ids": "ord-7,ord-8"
+          },
+          "status": "ok",
+          "result": "ORDER_TOTAL=125 ORDER_IDS=ord-7,ord-8"
+        },
+        {
+          "timestamp": 1781500880104,
+          "tool": "check_budget",
+          "args": {
+            "order_total": 125,
+            "limit": 200
+          },
+          "status": "ok",
+          "result": "BUDGET_STATUS=WITHIN_LIMIT ORDER_TOTAL=125 LIMIT=200"
+        },
+        {
+          "timestamp": 1781500883622,
+          "tool": "get_weather",
+          "args": {
+            "city": "Berlin"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=Berlin"
+        }
+      ],
+      "final_text": "The final results are:\n- Budget status: WITHIN_LIMIT (Order total: 125, Limit: 200)\n- Weather in Berlin: SUNNY",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-c4f0-722e-b76a-bc7c4d4a2275\"], \"maxTokens\": [512], \"promptTokens\": [1539], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 6.675, \"outputTokens\": [19], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-c4f0-722e-b76a-bc7c4d4a2275\"], \"maxTokens\": [512], \"promptTokens\": [1584], \"cacheReadTokens\": [1535]}\n[local-qwen-rcg] generate complete {\"seconds\": 3.822, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-c4f0-722e-b76a-bc7c4d4a2275\"], \"maxTokens\": [512], \"promptTokens\": [1639], \"cacheReadTokens\": [1580]}\n[local-qwen-rcg] generate complete {\"seconds\": 4.521, \"outputTokens\": [27], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-c4f0-722e-b76a-bc7c4d4a2275\"], \"maxTokens\": [512], \"promptTokens\": [1696], \"cacheReadTokens\": [1635]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.056, \"outputTokens\": [30], \"finishReasons\": [\"stop\"], \"cacheEntries\": 4}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-c4f0-722e-b76a-bc7c4d4a2275\"], \"maxTokens\": [512], \"promptTokens\": [1759], \"cacheReadTokens\": [1692]}\n[local-qwen-rcg] generate complete {\"seconds\": 3.517, \"outputTokens\": [19], \"finishReasons\": [\"stop\"], \"cacheEntries\": 5}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9b9-c4f0-722e-b76a-bc7c4d4a2275\"], \"maxTokens\": [512], \"promptTokens\": [1801], \"cacheReadTokens\": [1755]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.872, \"outputTokens\": [35], \"finishReasons\": [\"stop\"], \"cacheEntries\": 6}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 5,
+      "total_tool_calls": 5,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_pi_base",
+      "task_id": "recovery_fallback",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 24.07,
+      "main_assistant_turns": 3,
+      "main_model_generations": 3,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 4692,
+        "output": 83,
+        "cacheRead": 3068,
+        "cacheWrite": 1624,
+        "totalTokens": 4775,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 4692,
+        "output": 83,
+        "cacheRead": 3068,
+        "cacheWrite": 1624,
+        "totalTokens": 4775,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 0,
+        "retained": 0,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 0,
+        "swarm_tokens": 0
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500902816,
+          "tool": "inventory_status",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "error",
+          "result": "503 Service Unavailable from inventory provider"
+        },
+        {
+          "timestamp": 1781500907181,
+          "tool": "inventory_fallback",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "ok",
+          "result": "INVENTORY_AVAILABLE=12 SKU=SKU-404 PROVIDER=fallback"
+        }
+      ],
+      "final_text": "The primary failure was a 503 Service Unavailable from the inventory provider. The fallback inventory provider reported that SKU-404 is available with 12 units.",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9ba-4c4b-750a-bbfe-ea6c8880d782\"], \"maxTokens\": [512], \"promptTokens\": [1515], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 8.151, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9ba-4c4b-750a-bbfe-ea6c8880d782\"], \"maxTokens\": [512], \"promptTokens\": [1561], \"cacheReadTokens\": [1511]}\n[local-qwen-rcg] generate complete {\"seconds\": 4.363, \"outputTokens\": [24], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9ba-4c4b-750a-bbfe-ea6c8880d782\"], \"maxTokens\": [512], \"promptTokens\": [1616], \"cacheReadTokens\": [1557]}\n[local-qwen-rcg] generate complete {\"seconds\": 6.401, \"outputTokens\": [36], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 2,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "parallel_travel",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 31.961,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1141,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 1141,
+        "totalTokens": 1161,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 3,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 3,
+        "swarm_tokens": 3567
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500943502,
+          "tool": "get_weather",
+          "args": {
+            "city": "Tokyo"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=Tokyo"
+        },
+        {
+          "timestamp": 1781500943503,
+          "tool": "search_flights",
+          "args": {
+            "origin": "SFO",
+            "destination": "Tokyo",
+            "date": "2026-07-02"
+          },
+          "status": "ok",
+          "result": "FLIGHT_ID=DS204 ORIGIN=SFO DESTINATION=Tokyo DATE=2026-07-02"
+        },
+        {
+          "timestamp": 1781500943503,
+          "tool": "get_fx_rate",
+          "args": {
+            "base": "USD",
+            "quote": "JPY"
+          },
+          "status": "ok",
+          "result": "FX_RATE=157.25 BASE=USD QUOTE=JPY"
+        }
+      ],
+      "final_text": "[get_weather]\nget_weather({\"city\":\"Tokyo\"}) => WEATHER_CONDITION=SUNNY CITY=Tokyo\n\n[search_flights]\nsearch_flights({\"date\":\"2026-07-02\",\"destination\":\"Tokyo\",\"origin\":\"SFO\"}) => FLIGHT_ID=DS204 ORIGIN=SFO DESTINATION=Tokyo DATE=2026-07-02\n\n[get_fx_rate]\nget_fx_rate({\"base\":\"USD\",\"quote\":\"JPY\"}) => FX_RATE=157.25 BASE=USD QUOTE=JPY",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 3, \"sessions\": [\"swarm-branch-rcg-get_weather-1v0dkka-A\", \"swarm-branch-rcg-search_flights-1bsmcrt-B\", \"swarm-branch-rcg-get_fx_rate-mmn931-C\"], \"maxTokens\": [128, 128, 128], \"promptTokens\": [1141, 1174, 1162], \"cacheReadTokens\": [0, 0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 23.056, \"outputTokens\": [20, 43, 27], \"finishReasons\": [\"stop\", \"stop\", \"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 3,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "serial_orders_reviews",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 56.988,
+      "main_assistant_turns": 4,
+      "main_model_generations": 4,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 7455,
+        "output": 124,
+        "cacheRead": 5058,
+        "cacheWrite": 2397,
+        "totalTokens": 7579,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 7455,
+        "output": 124,
+        "cacheRead": 5058,
+        "cacheWrite": 2397,
+        "totalTokens": 7579,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 3,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 3,
+        "swarm_tokens": 3699
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781500966309,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781500966309,
+          "tool": "review_summary",
+          "args": {
+            "product": "laptop-pro"
+          },
+          "status": "ok",
+          "result": "REVIEW_SENTIMENT=POSITIVE PRODUCT=laptop-pro\nUNTRUSTED_DIAGNOSTIC_NOISE retry_count=2 trace_id=abc cache_warning=stale"
+        },
+        {
+          "timestamp": 1781500973306,
+          "tool": "fetch_orders",
+          "args": {
+            "customer_id": "cust-42"
+          },
+          "status": "ok",
+          "result": "ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"
+        },
+        {
+          "timestamp": 1781500983727,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781500988045,
+          "tool": "fetch_orders",
+          "args": {
+            "customer_id": "cust-42"
+          },
+          "status": "ok",
+          "result": "ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"
+        },
+        {
+          "timestamp": 1781500992117,
+          "tool": "review_summary",
+          "args": {
+            "product": "laptop-pro"
+          },
+          "status": "ok",
+          "result": "REVIEW_SENTIMENT=POSITIVE PRODUCT=laptop-pro\nUNTRUSTED_DIAGNOSTIC_NOISE retry_count=2 trace_id=abc cache_warning=stale"
+        }
+      ],
+      "final_text": "{\n  \"customer\": \"Alice\",\n  \"customer_id\": \"cust-42\",\n  \"orders\": [\"ord-7\", \"ord-8\"],\n  \"product_reviews\": {\n    \"product\": \"laptop-pro\",\n    \"review_sentiment\": \"POSITIVE\"\n  }\n}",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-resolve_customer-pgyndg-A\", \"swarm-branch-rcg-review_summary-1k6lgvn-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1135, 1138], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 14.147, \"outputTokens\": [19, 21], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-fetch_orders-34u8hz-A\"], \"maxTokens\": [128], \"promptTokens\": [1363], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.956, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9bb-26f1-7217-ad6c-e11eb7b1eacd\"], \"maxTokens\": [512], \"promptTokens\": [2610], \"cacheReadTokens\": [397]}\n[local-qwen-rcg] generate complete {\"seconds\": 9.101, \"outputTokens\": [19], \"finishReasons\": [\"stop\"], \"cacheEntries\": 4}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9bb-26f1-7217-ad6c-e11eb7b1eacd\"], \"maxTokens\": [512], \"promptTokens\": [1555], \"cacheReadTokens\": [1504]}\n[local-qwen-rcg] generate complete {\"seconds\": 4.304, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 5}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9bb-26f1-7217-ad6c-e11eb7b1eacd\"], \"maxTokens\": [512], \"promptTokens\": [1610], \"cacheReadTokens\": [1551]}\n[local-qwen-rcg] generate complete {\"seconds\": 4.059, \"outputTokens\": [21], \"finishReasons\": [\"stop\"], \"cacheEntries\": 6}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9bb-26f1-7217-ad6c-e11eb7b1eacd\"], \"maxTokens\": [512], \"promptTokens\": [1680], \"cacheReadTokens\": [1606]}\n[local-qwen-rcg] generate complete {\"seconds\": 10.381, \"outputTokens\": [61], \"finishReasons\": [\"stop\"], \"cacheEntries\": 7}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 6,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "serial_route_weather",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 64.278,
+      "main_assistant_turns": 1,
+      "main_model_generations": 1,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 2838,
+        "output": 99,
+        "cacheRead": 397,
+        "cacheWrite": 2441,
+        "totalTokens": 2937,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 2838,
+        "output": 99,
+        "cacheRead": 397,
+        "cacheWrite": 2441,
+        "totalTokens": 2937,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 3,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 3,
+        "swarm_tokens": 3871
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501027276,
+          "tool": "get_weather",
+          "args": {
+            "city": "San Francisco"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=San Francisco"
+        },
+        {
+          "timestamp": 1781501027278,
+          "tool": "geocode",
+          "args": {
+            "place": "Golden Gate Bridge"
+          },
+          "status": "ok",
+          "result": "PLACE=Golden Gate Bridge LAT=37.8199 LON=-122.4783"
+        },
+        {
+          "timestamp": 1781501027278,
+          "tool": "geocode",
+          "args": {
+            "place": "Ferry Building"
+          },
+          "status": "ok",
+          "result": "PLACE=Ferry Building LAT=37.7955 LON=-122.3937"
+        },
+        {
+          "timestamp": 1781501042029,
+          "tool": "route_time",
+          "args": {
+            "origin_lat": 37.8199,
+            "origin_lon": -122.4783,
+            "destination_lat": 37.7955,
+            "destination_lon": -122.3937
+          },
+          "status": "ok",
+          "result": "ROUTE_MINUTES=24 MODE=drive"
+        }
+      ],
+      "final_text": "The geocode results for the Golden Gate Bridge and Ferry Building are as follows:\n\n- **Golden Gate Bridge**: Latitude = 37.8199, Longitude = -122.4783\n- **Ferry Building**: Latitude = 37.7955, Longitude = -122.3937\n\nThe route time between these two locations is approximately 24 minutes by drive.\n\nThe current weather in San Francisco is sunny.",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-get_weather-1v0dkka-A\", \"swarm-branch-rcg-geocode-1ma3sf3-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1128, 1147], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 18.189, \"outputTokens\": [20, 43], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-route_time-xg4j92-A\"], \"maxTokens\": [128], \"promptTokens\": [1466], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 13.358, \"outputTokens\": [67], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9bc-05dd-71ea-8f5f-be0be789740c\"], \"maxTokens\": [512], \"promptTokens\": [2838], \"cacheReadTokens\": [397]}\n[local-qwen-rcg] generate complete {\"seconds\": 23.233, \"outputTokens\": [99], \"finishReasons\": [\"stop\"], \"cacheEntries\": 4}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 3,
+      "total_tool_calls": 4,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "partial_503",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 29.015,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1137,
+        "output": 19,
+        "cacheRead": 0,
+        "cacheWrite": 1137,
+        "totalTokens": 1156,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 2,
+        "suppressed": 0,
+        "dependency_transfers": 1,
+        "unique_draft_tool_signatures": 2,
+        "swarm_tokens": 2594
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501088773,
+          "tool": "get_weather",
+          "args": {
+            "city": "London"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=London"
+        },
+        {
+          "timestamp": 1781501088773,
+          "tool": "inventory_status",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "error",
+          "result": "503 Service Unavailable from inventory provider"
+        },
+        {
+          "timestamp": 1781501094499,
+          "tool": "inventory_status",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "error",
+          "result": "503 Service Unavailable from inventory provider"
+        }
+      ],
+      "final_text": "TASK_STATUS: COMPLETE_WITH_REPORTED_FAILURE\nThe swarm completed the truthful response using verified successes and attributed failure evidence.\nFAILED_STEPS:\n- rcg-inventory_status-9nf7xv | inventory_status | server_or_network | recovery=abandon_tool_for_this_task_and_report_service_failure\nRequired response: preserve verified partial evidence, identify failed components precisely, and never invent a successful tool result.\n\nVERIFIED_PARTIAL_RESULTS:\n- get_weather: get_weather({\"city\":\"London\"}) => WEATHER_CONDITION=SUNNY CITY=London\n- inventory_status: inventory_status({\"sku\":\"SKU-404\"}) => ERROR: 503 Service Unavailable from inventory provider\ninventory_status({\"sku\":\"SKU-404\"}) => ERROR: 503 Service Unavailable from inventory provider",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-get_weather-1v0dkka-A\", \"swarm-branch-rcg-inventory_status-9nf7xv-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1137, 1152], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 15.036, \"outputTokens\": [19, 23], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-inventory_status-9nf7xv-B\"], \"maxTokens\": [64], \"promptTokens\": [1415], \"cacheReadTokens\": [1148]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.306, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 3,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "partial_401",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 34.196,
+      "main_assistant_turns": 1,
+      "main_model_generations": 0,
+      "direct_takeover": true,
+      "main_usage": {
+        "input": 1146,
+        "output": 19,
+        "cacheRead": 0,
+        "cacheWrite": 1146,
+        "totalTokens": 1165,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 2,
+        "suppressed": 0,
+        "dependency_transfers": 1,
+        "unique_draft_tool_signatures": 2,
+        "swarm_tokens": 2637
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501117323,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781501117324,
+          "tool": "billing_status",
+          "args": {
+            "account_id": "acct-9"
+          },
+          "status": "error",
+          "result": "401 Unauthorized: billing API credential expired"
+        }
+      ],
+      "final_text": "TASK_STATUS: COMPLETE_WITH_REPORTED_FAILURE\nThe swarm completed the truthful response using verified successes and attributed failure evidence.\nFAILED_STEPS:\n- rcg-billing_status-sgnx7r | billing_status | auth_or_quota | recovery=abandon_tool_for_this_task_and_report_auth_failure\nRequired response: preserve verified partial evidence, identify failed components precisely, and never invent a successful tool result.\n\nVERIFIED_PARTIAL_RESULTS:\n- resolve_customer: resolve_customer({\"customer\":\"Alice\"}) => CUSTOMER_ID=cust-42 CUSTOMER=Alice\n- billing_status: The customer \"Alice\" has been successfully resolved with CUSTOMER_ID=cust-42. However, the billing status check for account \"acct-9\" failed with a 401 Unauthorized error, indicating an expired API credential. This part of the task cannot be completed due to authentication failure. The successful customer",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-resolve_customer-pgyndg-A\", \"swarm-branch-rcg-billing_status-sgnx7r-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1146, 1145], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 14.783, \"outputTokens\": [19, 22], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-billing_status-sgnx7r-B\"], \"maxTokens\": [64], \"promptTokens\": [1408], \"cacheReadTokens\": [1141]}\n[local-qwen-rcg] generate complete {\"seconds\": 11.558, \"outputTokens\": [64], \"finishReasons\": [\"length\"], \"cacheEntries\": 3}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 2,
+      "total_tool_calls": 2,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "long_chain_budget",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 70.467,
+      "main_assistant_turns": 1,
+      "main_model_generations": 1,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 3081,
+        "output": 95,
+        "cacheRead": 397,
+        "cacheWrite": 2684,
+        "totalTokens": 3176,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 3081,
+        "output": 95,
+        "cacheRead": 397,
+        "cacheWrite": 2684,
+        "totalTokens": 3176,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 5,
+        "suppressed": 0,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 5,
+        "swarm_tokens": 6712
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501151665,
+          "tool": "resolve_customer",
+          "args": {
+            "customer": "Alice"
+          },
+          "status": "ok",
+          "result": "CUSTOMER_ID=cust-42 CUSTOMER=Alice"
+        },
+        {
+          "timestamp": 1781501151665,
+          "tool": "get_weather",
+          "args": {
+            "city": "Berlin"
+          },
+          "status": "ok",
+          "result": "WEATHER_CONDITION=SUNNY CITY=Berlin"
+        },
+        {
+          "timestamp": 1781501158426,
+          "tool": "fetch_orders",
+          "args": {
+            "customer_id": "cust-42"
+          },
+          "status": "ok",
+          "result": "ORDER_IDS=ord-7,ord-8 CUSTOMER_ID=cust-42"
+        },
+        {
+          "timestamp": 1781501166352,
+          "tool": "fetch_order_total",
+          "args": {
+            "order_ids": "ord-7,ord-8"
+          },
+          "status": "ok",
+          "result": "ORDER_TOTAL=125 ORDER_IDS=ord-7,ord-8"
+        },
+        {
+          "timestamp": 1781501175252,
+          "tool": "check_budget",
+          "args": {
+            "order_total": 125,
+            "limit": 200
+          },
+          "status": "ok",
+          "result": "BUDGET_STATUS=WITHIN_LIMIT ORDER_TOTAL=125 LIMIT=200"
+        }
+      ],
+      "final_text": "The budget check and weather information have been successfully retrieved based on the dependency chain:\n\n1. **Budget Check:**\n   - **Order Total:** 125\n   - **Limit:** 200\n   - **Budget Status:** WITHIN_LIMIT\n\n2. **Weather:**\n   - **City:** Berlin\n   - **Weather Condition:** SUNNY\n\nFinal results:\n- **Budget Status:** WITHIN_LIMIT\n- **Weather Condition:** SUNNY",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 2, \"sessions\": [\"swarm-branch-rcg-resolve_customer-pgyndg-A\", \"swarm-branch-rcg-get_weather-1v0dkka-B\"], \"maxTokens\": [128, 128], \"promptTokens\": [1164, 1153], \"cacheReadTokens\": [0, 0]}\n[local-qwen-rcg] generate complete {\"seconds\": 14.567, \"outputTokens\": [19, 19], \"finishReasons\": [\"stop\", \"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-fetch_orders-34u8hz-A\"], \"maxTokens\": [128], \"promptTokens\": [1335], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.86, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-fetch_order_total-rmd2ah-A\"], \"maxTokens\": [128], \"promptTokens\": [1428], \"cacheReadTokens\": [705]}\n[local-qwen-rcg] generate complete {\"seconds\": 6.793, \"outputTokens\": [27], \"finishReasons\": [\"stop\"], \"cacheEntries\": 4}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-check_budget-etdoz6-A\"], \"maxTokens\": [128], \"promptTokens\": [1514], \"cacheReadTokens\": [704]}\n[local-qwen-rcg] generate complete {\"seconds\": 7.662, \"outputTokens\": [30], \"finishReasons\": [\"stop\"], \"cacheEntries\": 5}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9bd-f7fb-7d74-a6b3-5444c13e11b8\"], \"maxTokens\": [512], \"promptTokens\": [3081], \"cacheReadTokens\": [397]}\n[local-qwen-rcg] generate complete {\"seconds\": 23.693, \"outputTokens\": [95], \"finishReasons\": [\"stop\"], \"cacheEntries\": 6}\n",
+      "task_success": true,
+      "tool_coverage": 1.0,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 1.0,
+      "marker_recall": 1.0,
+      "minimum_calls_ok": true,
+      "dependency_ok": true,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 5,
+      "total_tool_calls": 5,
+      "irrelevant_tools": []
+    },
+    {
+      "system": "qwen_rcg_swarm",
+      "task_id": "recovery_fallback",
+      "returncode": 0,
+      "timed_out": false,
+      "latency_s": 37.257,
+      "main_assistant_turns": 1,
+      "main_model_generations": 1,
+      "direct_takeover": false,
+      "main_usage": {
+        "input": 2387,
+        "output": 64,
+        "cacheRead": 397,
+        "cacheWrite": 1990,
+        "totalTokens": 2451,
+        "cost": 0.0
+      },
+      "main_generation_usage": {
+        "input": 2387,
+        "output": 64,
+        "cacheRead": 397,
+        "cacheWrite": 1990,
+        "totalTokens": 2451,
+        "cost": 0.0
+      },
+      "swarm": {
+        "rounds": 1,
+        "retained": 1,
+        "suppressed": 1,
+        "dependency_transfers": 0,
+        "unique_draft_tool_signatures": 1,
+        "swarm_tokens": 2393
+      },
+      "tool_trace": [
+        {
+          "timestamp": 1781501215430,
+          "tool": "inventory_status",
+          "args": {
+            "sku": "SKU-404"
+          },
+          "status": "error",
+          "result": "503 Service Unavailable from inventory provider"
+        }
+      ],
+      "final_text": "The inventory check for SKU-404 failed due to the unavailability of the inventory_status tool. The fallback inventory provider (inventory_fallback) was not called before observing the failure. The task cannot be completed until the inventory_status tool is available or the fallback is explicitly triggered after a 503 failure.",
+      "stderr_tail": "[local-qwen-rcg] loading one native model from /Users/migraine/models/qwen3-8b\n[local-qwen-rcg] RCG controller loaded without a second base model: step=200 version=13\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-inventory_status-9nf7xv-A\"], \"maxTokens\": [128], \"promptTokens\": [1144], \"cacheReadTokens\": [0]}\n[local-qwen-rcg] generate complete {\"seconds\": 7.801, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 1}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"swarm-branch-rcg-inventory_fallback-1kzc0jp-A\"], \"maxTokens\": [128], \"promptTokens\": [1203], \"cacheReadTokens\": [705]}\n[local-qwen-rcg] generate complete {\"seconds\": 5.578, \"outputTokens\": [23], \"finishReasons\": [\"stop\"], \"cacheEntries\": 2}\n[local-qwen-rcg] generate batch {\"size\": 1, \"sessions\": [\"019ec9bf-0b96-7fe8-a047-8fe7aab9079a\"], \"maxTokens\": [512], \"promptTokens\": [2387], \"cacheReadTokens\": [397]}\n[local-qwen-rcg] generate complete {\"seconds\": 14.873, \"outputTokens\": [64], \"finishReasons\": [\"stop\"], \"cacheEntries\": 3}\n",
+      "task_success": false,
+      "tool_coverage": 0.5,
+      "planning_precision": 1.0,
+      "successful_tool_coverage": 0.0,
+      "marker_recall": 0.6666666666666666,
+      "minimum_calls_ok": true,
+      "dependency_ok": false,
+      "failure_attribution_ok": true,
+      "hallucination_free": true,
+      "unique_tools_called": 1,
+      "total_tool_calls": 1,
+      "irrelevant_tools": []
+    }
+  ]
+}
