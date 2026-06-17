@@ -44,9 +44,11 @@ collect.sh
 rcg_project/.venv/
 rcg_project/cache/
 rcg_project/data/
+rcg_project/eval_results/
 rcg_project/checkpoints/*.pt
 rcg_project/checkpoints/*.pth
 rcg_project/__pycache__/
 rcg_project/rcg/__pycache__/
+rcg_project/fascia_moe/__pycache__/
 rcg_project/**/*.pyc
 !rcg_project/artifacts/logs/*.console.log

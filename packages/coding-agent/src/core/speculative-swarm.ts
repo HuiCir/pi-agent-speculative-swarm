@@ -16,6 +16,8 @@ const SWARM_MEMORY_MARKER = "<residual_swarm_memory";
 const ORCHESTRATOR_BRIEF_AGENT = "Turn0OrchestratorBrief";
 const DEFAULT_AGENTS = ["SwarmAgent-A", "SwarmAgent-B", "SwarmAgent-C", "SwarmAgent-D"];
 const MUTATING_TOOL_NAMES = new Set(["edit", "write"]);
+const TERMINAL_PROVIDER_ERROR_PATTERN =
+	/\b(?:401|403|404|408|409|429|500|502|503|504|auth|quota|rate.?limit|timeout|timed out|unavailable|not found|connection|network|service)\b/i;
 
 export type SpeculativeSwarmToolPolicy = "none" | "readonly" | "all";
 /** @deprecated All tasks now use the unified dynamic action-DAG scheduler. */
@@ -419,7 +421,7 @@ class ResidualSpeculativeSwarmController implements SpeculativeSwarmController {
 			twoStage: options.twoStage ?? true,
 			candidateMultiplier: Math.max(1, options.candidateMultiplier ?? 2),
 			waveSize: Math.max(1, options.waveSize ?? options.agents?.length ?? DEFAULT_AGENTS.length),
-			directTakeover: options.directTakeover ?? true,
+			directTakeover: options.directTakeover ?? process.env.PI_SWARM_DIRECT_TAKEOVER !== "0",
 			takeoverThreshold: Math.min(1, Math.max(0, options.takeoverThreshold ?? 0.8)),
 		};
 		this.dynamicPolicy = options.dynamicPolicy;
@@ -452,16 +454,29 @@ class ResidualSpeculativeSwarmController implements SpeculativeSwarmController {
 	): Promise<{ context?: AgentContext; response?: AssistantMessage } | undefined> {
 		const cleanMessages = input.context.messages.filter((message) => !isSpeculativeSwarmMemoryMessage(message));
 		const lastMessage = cleanMessages[cleanMessages.length - 1];
-		if (!lastMessage || (lastMessage.role !== "user" && lastMessage.role !== "toolResult")) {
-			return undefined;
-		}
-		this.updateGlobalTaskState(cleanMessages, input.requestIndex);
-		// Dynamic branches already execute and route their own tool results.
-		// Re-running the full swarm for each main-agent tool result duplicates
-		// planning, tool calls, and KV work instead of compressing the agent loop.
-		if (lastMessage.role === "toolResult" && this.dynamicPolicy) {
-			return undefined;
-		}
+			if (!lastMessage || (lastMessage.role !== "user" && lastMessage.role !== "toolResult")) {
+				return undefined;
+			}
+			this.updateGlobalTaskState(cleanMessages, input.requestIndex);
+			if (lastMessage.role === "toolResult" && this.dynamicPolicy) {
+				const memoryMessage = this.buildContinuationMemoryMessage(input, cleanMessages);
+				if (!memoryMessage) {
+					return undefined;
+				}
+				return {
+					context: {
+						...input.context,
+						messages: [
+							...cleanMessages,
+							{
+								role: "user",
+								content: [{ type: "text", text: memoryMessage }],
+								timestamp: Date.now(),
+							},
+						],
+					},
+				};
+			}
 
 		let latestDrafts: SwarmDraft[] = [];
 		let latestSelection = "";
@@ -549,19 +564,21 @@ class ResidualSpeculativeSwarmController implements SpeculativeSwarmController {
 		const preflightTask = shouldRunPreflight
 			? this.runOrchestratorBrief(roundIndex, cleanMessages, input, candidateBriefs)
 			: Promise.resolve(this.createSkippedPreflight(roundIndex, candidateBriefs));
-		const replay = this.createRuntimeReplayDraft(roundIndex, candidateBriefs);
-		const replayedIds = new Set(replay ? [replay.briefId] : []);
+		const replayDrafts = this.createRuntimeReplayDrafts(roundIndex, candidateBriefs);
+		const replayedIds = new Set(replayDrafts.map((draft) => draft.briefId));
 		const preflight = await preflightTask.catch(() =>
 			this.createPlaceholderPreflight(roundIndex, candidateBriefs, roundStartedAt),
 		);
 		let executedBriefs = candidateBriefs.filter((brief) => replayedIds.has(brief.id));
-		let drafts = replay ? [replay] : [];
+		let drafts = [...replayDrafts];
 		let dependencyTransfers: SwarmDependencyTransfer[] = [];
 		let decision: CollectiveDecision | undefined;
 		let waves = 0;
 		const executedIds = new Set(replayedIds);
 		const completedIds = new Set(
-			drafts.filter((draft) => this.isVerifiedCompleteDraft(draft)).map((draft) => draft.briefId),
+			drafts
+				.filter((draft) => this.isVerifiedCompleteDraft(draft) || this.hasTransferableErrorEvidence(draft))
+				.map((draft) => draft.briefId),
 		);
 
 		while (waves < candidateBriefs.length) {
@@ -681,13 +698,14 @@ class ResidualSpeculativeSwarmController implements SpeculativeSwarmController {
 					break;
 				}
 
-				const stageCalls = executions.flatMap((execution) =>
-					Array.from(execution.toolCalls.values())
-						.filter((call) => call.stage === stage && Boolean(call.resultText) && !execution.timedOut)
-						.map((call) => ({ execution, call })),
-				);
-				const successfulEvidence = stageCalls.filter(({ call }) => !call.isError);
-				let dynamicRoutes: SpeculativeSwarmDynamicRoute["routes"] | undefined;
+					const stageCalls = executions.flatMap((execution) =>
+						Array.from(execution.toolCalls.values())
+							.filter((call) => call.stage === stage && Boolean(call.resultText) && !execution.timedOut)
+							.map((call) => ({ execution, call })),
+					);
+					const successfulEvidence = stageCalls.filter(({ call }) => !call.isError);
+					const transferableEvidence = this.dynamicPolicy ? stageCalls : successfulEvidence;
+					let dynamicRoutes: SpeculativeSwarmDynamicRoute["routes"] | undefined;
 				if (this.dynamicPolicy?.route) {
 					const task = this.originalTask || this.findRootTask(baseMessages);
 					const routed = await this.dynamicPolicy.route({
@@ -722,11 +740,11 @@ class ResidualSpeculativeSwarmController implements SpeculativeSwarmController {
 					}
 					const route = dynamicRoutes?.find((candidate) => candidate.targetBriefId === target.brief.id);
 					const allowedSources = route ? new Set(route.sourceBriefIds) : undefined;
-					const peerEvidence = successfulEvidence.filter(
-						({ execution }) =>
-							execution.brief.id !== target.brief.id &&
-							(!allowedSources || allowedSources.has(execution.brief.id)),
-					);
+						const peerEvidence = transferableEvidence.filter(
+							({ execution }) =>
+								execution.brief.id !== target.brief.id &&
+								(!allowedSources || allowedSources.has(execution.brief.id)),
+						);
 					const ownErrors =
 						route?.retryOwnErrors && this.canRetryOwnError(target)
 							? stageCalls.filter(
@@ -867,13 +885,13 @@ Route reason: ${routeReason ?? "Dependency evidence or local repair signal."}
 
 ${evidence}
 
-Continuation rules:
-- Stay on assigned branch ${target.brief.id}: ${target.brief.title}.
-- Use a sibling result only when it supplies a missing parameter, entity, constraint, or prerequisite.
-- Do not repeat a sibling tool call merely to rediscover the same result.
-- Treat outcome=error as a repair signal, never as factual task evidence.
-- Repair any speculative or failed call from the previous stage with the new evidence.
-- If your branch is already complete, return DEPENDENCY_NOOP and a compact reusable finding.
+	Continuation rules:
+	- Stay on assigned branch ${target.brief.id}: ${target.brief.title}.
+	- Use a sibling result only when it supplies a missing parameter, entity, constraint, or prerequisite.
+	- Do not repeat a sibling tool call merely to rediscover the same result.
+	- Treat outcome=error as bounded failure evidence: do not infer the missing value; route to a fallback or report the blocked step.
+	- Repair any speculative or failed call from the previous stage with the new evidence.
+	- If your branch is already complete, return DEPENDENCY_NOOP and a compact reusable finding.
 </swarm_dependency_update>`;
 	}
 
@@ -951,12 +969,18 @@ Continuation rules:
 	}
 
 	private executionHasTerminalProviderError(execution: CooperativeBranchExecution): boolean {
-		const terminalPattern =
-			/\b(?:401|403|404|408|409|429|500|502|503|504|auth|quota|rate.?limit|timeout|timed out|unavailable|not found|connection|network|service)\b/i;
 		return Array.from(execution.toolCalls.values()).some(
 			(call) =>
 				call.isError &&
-				terminalPattern.test(`${call.resultText ?? ""}\n${call.resultPreview ?? ""}`),
+				TERMINAL_PROVIDER_ERROR_PATTERN.test(`${call.resultText ?? ""}\n${call.resultPreview ?? ""}`),
+		);
+	}
+
+	private draftHasTerminalProviderError(draft: SwarmDraft): boolean {
+		return draft.toolCalls.some(
+			(call) =>
+				call.isError &&
+				TERMINAL_PROVIDER_ERROR_PATTERN.test(`${call.resultText ?? ""}\n${call.resultPreview ?? ""}`),
 		);
 	}
 
@@ -981,38 +1005,46 @@ Continuation rules:
 		);
 	}
 
-	private createRuntimeReplayDraft(roundIndex: number, activeBriefs: BranchBrief[]): SwarmDraft | undefined {
+	private createRuntimeReplayDrafts(roundIndex: number, activeBriefs: BranchBrief[]): SwarmDraft[] {
 		if (process.env.PI_SWARM_ENABLE_RUNTIME_REPLAY === "0") {
-			return undefined;
+			return [];
 		}
 		if (this.memory.length === 0) {
-			return undefined;
+			return [];
 		}
+		const replays: SwarmDraft[] = [];
+		const seen = new Set<string>();
 		for (const brief of activeBriefs) {
 			const state = this.branchRuntime.get(brief.id);
 			const draft = state?.lastDraft;
 			if (!draft || state.status !== "active") {
 				continue;
 			}
-			if (draft.score < 2.2 || draft.status !== "ok" || hasUnsupportedAbsenceClaim(draft)) {
+			if (seen.has(draft.briefId) || draft.status !== "ok" || hasUnsupportedAbsenceClaim(draft)) {
 				continue;
 			}
-			if (normalizeText(draft.finalText).length < 160 && draft.toolCalls.length === 0) {
+			const verified = this.isVerifiedCompleteDraft(draft);
+			const terminalFailure = this.draftHasTerminalProviderError(draft);
+			if (!verified && !terminalFailure) {
 				continue;
 			}
-			return attachAssistantMessage(
+			if (!terminalFailure && draft.score < 2.0 && draft.toolCalls.length === 0) {
+				continue;
+			}
+			seen.add(draft.briefId);
+			replays.push(attachAssistantMessage(
 				{
 					...draft,
 					agent: `RuntimeReplay:${state.lastAgent ?? draft.agent}`,
 					roundIndex,
 					latencyMs: 0,
 					turns: 0,
-					score: Math.max(1, draft.score - 0.25),
+					score: terminalFailure ? Math.max(0, draft.score) : Math.max(1, draft.score - 0.25),
 				},
 				draft.assistantMessage,
-			);
+			));
 		}
-		return undefined;
+		return replays;
 	}
 
 	private shouldRunPreflight(requestIndex: number): boolean {
@@ -1505,9 +1537,9 @@ ${selected.map((draft) => `- ${draft.branchTitle}: ${this.formatVerifiedDraft(dr
 					})),
 				},
 			});
-			if (planned.length > 0) {
-				const idAliases = new Map<string, string>();
-				const prepared = planned.slice(0, count).map((action, index) => {
+				if (planned.length > 0) {
+					const idAliases = new Map<string, string>();
+					const prepared = planned.slice(0, count).map((action, index) => {
 					const stableKey =
 						action.stableKey ??
 						`${action.toolName ?? action.title}:${normalizeText(action.objective || action.title)}`;
@@ -1537,12 +1569,13 @@ ${selected.map((draft) => `- ${draft.branchTitle}: ${this.formatVerifiedDraft(dr
 						planConfidence: action.planConfidence,
 					};
 				});
-				return prepared.map((brief) => ({
-					...brief,
-					dependsOn: brief.dependsOn?.map((id) => idAliases.get(id) ?? id),
-				}));
+					const aliased = prepared.map((brief) => ({
+						...brief,
+						dependsOn: brief.dependsOn?.map((id) => idAliases.get(id) ?? id),
+					}));
+					return this.expandRepeatedToolInstanceBriefs(aliased, taskText, tools);
+				}
 			}
-		}
 		const extracted = extractActionCandidates(taskText);
 		if (extracted.length < 2) {
 			return this.prepareBranchBriefs(baseMessages, requestIndex, count);
@@ -1575,6 +1608,63 @@ ${selected.map((draft) => `- ${draft.branchTitle}: ${this.formatVerifiedDraft(dr
 		});
 
 		return briefs;
+	}
+
+	private expandRepeatedToolInstanceBriefs(
+		briefs: BranchBrief[],
+		taskText: string,
+		tools: AgentTool[],
+	): BranchBrief[] {
+		const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+		const expandedByOriginalId = new Map<string, BranchBrief[]>();
+		const expanded: BranchBrief[] = [];
+
+		for (const brief of briefs) {
+			const tool = brief.toolName ? toolByName.get(brief.toolName) : undefined;
+			const parameterName = tool ? singleRequiredStringParameterName(tool.parameters) : undefined;
+			const values =
+				tool && parameterName
+					? extractRepeatedParameterValues(taskText, brief.toolName ?? tool.name, parameterName)
+					: [];
+			const shouldExpand =
+				values.length >= 2 &&
+				brief.toolName &&
+				!brief.objective.toLowerCase().includes(values[0].toLowerCase());
+
+			if (!shouldExpand) {
+				expandedByOriginalId.set(brief.id, [brief]);
+				expanded.push(brief);
+				continue;
+			}
+
+			const clones = values.map((value, index): BranchBrief => {
+				const stableKey = `${brief.stableKey ?? brief.toolName}:${parameterName}=${value}`;
+				const id = this.stableActionId(stableKey);
+				return {
+					...brief,
+					id,
+					title: `${brief.title} ${value}`,
+					objective:
+						`${brief.objective} Use ${parameterName}=${JSON.stringify(value)} as the concrete argument for this branch. ` +
+						"Do not substitute a sibling entity; repeated calls to the same tool must stay separate unless runtime evidence proves they can be merged.",
+					whyDistinct:
+						`${brief.whyDistinct} This is a separate argument instance for ${parameterName}=${JSON.stringify(value)}.`,
+					stableKey,
+					dependsOn: brief.dependsOn,
+					priority: (brief.priority ?? brief.admission ?? 0.5) + (values.length - index) * 0.0001,
+				};
+			});
+			expandedByOriginalId.set(brief.id, clones);
+			expanded.push(...clones);
+		}
+
+		return expanded.map((brief) => ({
+			...brief,
+			dependsOn: brief.dependsOn?.flatMap((id) => {
+				const replacements = expandedByOriginalId.get(id);
+				return replacements?.map((item) => item.id) ?? [id];
+			}),
+		}));
 	}
 
 	private matchToolsForStep(step: string, tools: AgentTool[]): string[] {
@@ -1956,7 +2046,15 @@ ${selection}`;
 				allPlannedActionsAccountedFor &&
 				structurallyFailedBriefIds.size > 0 &&
 				Array.from(structurallyFailedBriefIds).every((id) => recoveredFailureIds.has(id));
-			const structuralTakeover = allPlannedActionsSucceeded || structurallyRecovered;
+			const structurallyReportableFailure =
+				allPlannedActionsAccountedFor &&
+				structurallyFailedBriefIds.size > 0 &&
+				Array.from(structurallyFailedBriefIds).every((id) => {
+					const draft = retainedDrafts.find((candidate) => candidate.briefId === id);
+					return Boolean(draft && this.draftHasTerminalProviderError(draft));
+				});
+			const structuralTakeover =
+				allPlannedActionsSucceeded || structurallyRecovered || structurallyReportableFailure;
 			const requestedMainIds = (selected.mainBriefIds ?? []).filter((id) => retainedIds.has(id));
 			const fallbackMain = retainedDrafts
 				.slice()
@@ -2003,9 +2101,15 @@ ${selection}`;
 				mainDecision,
 				mainBriefIds,
 				mainConfidence,
-				taskStatus: structuralTakeover ? "complete" : selected.taskStatus,
+				taskStatus:
+					structurallyReportableFailure && !structurallyRecovered
+						? "unsolvable_current_plan"
+						: structuralTakeover
+							? "complete"
+							: selected.taskStatus,
 				taskComplete: policyComplete,
-				taskSolvable: structurallyRecovered ? true : selected.taskSolvable,
+				taskSolvable:
+					structurallyRecovered ? true : structurallyReportableFailure ? false : selected.taskSolvable,
 			};
 		}
 		const briefById = new Map(briefs.map((brief) => [brief.id, brief]));
@@ -2230,6 +2334,123 @@ ${nextText || "- none"}`;
 		return jaccard(tokenSet(a), tokenSet(b));
 	}
 
+	private collectToolCallArguments(messages: AgentMessage[]): Map<string, { toolName: string; args: unknown }> {
+		const calls = new Map<string, { toolName: string; args: unknown }>();
+		for (const message of messages) {
+			if (message.role !== "assistant") {
+				continue;
+			}
+			for (const item of message.content) {
+				if (item.type !== "toolCall") {
+					continue;
+				}
+				const call = item as { id?: string; name?: string; arguments?: unknown };
+				if (call.id) {
+					calls.set(call.id, {
+						toolName: call.name ?? "",
+						args: call.arguments ?? {},
+					});
+				}
+			}
+		}
+		return calls;
+	}
+
+	private formatTranscriptToolResults(messages: AgentMessage[]): string[] {
+		const callsById = this.collectToolCallArguments(messages);
+		return messages
+			.filter((message): message is ToolResultMessage => message.role === "toolResult")
+			.slice(-24)
+			.map((message) => {
+				const call = callsById.get(message.toolCallId);
+				const args = call ? stableStringify(call.args) : "<unknown>";
+				const result = truncateText(getText(message), this.options.maxDependencyChars);
+				return `- source=main_transcript outcome=${message.isError ? "error" : "success"} tool=${message.toolName} args=${args} result=${result}`;
+			});
+	}
+
+	private formatToolLedgerForMain(): string[] {
+		return Array.from(this.toolLedger.values())
+			.sort((left, right) => right.completedAt - left.completedAt)
+			.slice(0, 24)
+			.map(
+				(entry) =>
+					`- source=swarm_cache outcome=success tool=${entry.toolName} args=${stableStringify(entry.args)} result=${truncateText(entry.resultPreview, this.options.maxDependencyChars)}`,
+			);
+	}
+
+	private collectReusableDraftEvidence(): string[] {
+		const lines: string[] = [];
+		for (const round of this.memory.slice(-this.options.maxMemoryRounds)) {
+			const drafts = [
+				...round.retainedDrafts.map((draft) => ({ draft, source: "retained_branch" })),
+				...round.suppressedDrafts
+					.filter((draft) => this.hasTransferableErrorEvidence(draft))
+					.map((draft) => ({ draft, source: "suppressed_failure_branch" })),
+			];
+			for (const { draft, source } of drafts) {
+				const calls = draft.toolCalls.filter((call) => Boolean((call.resultText ?? call.resultPreview ?? "").trim()));
+				if (calls.length === 0 && draft.finalText.trim()) {
+					lines.push(
+						`- source=${source} round=${round.roundIndex} branch=${draft.briefId} outcome=${draft.status} result=${truncateText(draft.finalText, this.options.maxDependencyChars)}`,
+					);
+					continue;
+				}
+				for (const call of calls) {
+					lines.push(
+						`- source=${source} round=${round.roundIndex} branch=${draft.briefId} outcome=${call.isError ? "error" : "success"} tool=${call.toolName} args=${stableStringify(call.args)} result=${truncateText(call.resultText ?? call.resultPreview ?? "", this.options.maxDependencyChars)}`,
+					);
+				}
+			}
+		}
+		return lines.slice(-32);
+	}
+
+	private buildContinuationMemoryMessage(
+		input: SpeculativeSwarmPrepareContext,
+		cleanMessages: AgentMessage[],
+	): string | undefined {
+		const transcriptEvidence = this.formatTranscriptToolResults(cleanMessages);
+		const cacheEvidence = this.formatToolLedgerForMain();
+		const draftEvidence = this.collectReusableDraftEvidence();
+		if (transcriptEvidence.length === 0 && cacheEvidence.length === 0 && draftEvidence.length === 0) {
+			return undefined;
+		}
+		const latestRound = this.memory[this.memory.length - 1];
+		const latestToolResult = cleanMessages[cleanMessages.length - 1] as ToolResultMessage | undefined;
+		const latestObservation =
+			latestToolResult?.role === "toolResult"
+				? `tool=${latestToolResult.toolName} outcome=${latestToolResult.isError ? "error" : "success"} result=${truncateText(getText(latestToolResult), 1_200)}`
+				: truncateText(this.latestObservation, 1_200);
+		return `<residual_swarm_memory version="2" mode="cross-turn-state-update">
+This block is runtime state from Fascia, not a new user request.
+Main orchestrator model: ${input.model.provider}/${input.model.id}
+Task epoch: ${this.taskEpoch}
+Latest main observation: ${latestObservation || "none"}
+Latest swarm round: ${
+	latestRound
+		? `round=${latestRound.roundIndex} status=${latestRound.taskStatus ?? "unknown"} retained=${latestRound.retainedDrafts.length} suppressed=${latestRound.suppressedDrafts.length}`
+		: "none"
+}
+
+VERIFIED_OR_REQUIRED_EVIDENCE:
+${draftEvidence.length > 0 ? draftEvidence.join("\n") : "- none"}
+
+MAIN_TRANSCRIPT_TOOL_RESULTS:
+${transcriptEvidence.length > 0 ? transcriptEvidence.join("\n") : "- none"}
+
+SWARM_TOOL_CACHE:
+${cacheEvidence.length > 0 ? cacheEvidence.join("\n") : "- none"}
+
+CROSS_TURN_RULES:
+- Continue from the first missing dependency; do not restart the whole task.
+- Reuse outcome=success entries as completed local facts. Do not repeat an identical tool+args call unless the transcript explicitly invalidates it.
+- Preserve outcome=error entries as failure evidence. If a required terminal/auth/quota/server/unavailable step failed and no fallback succeeded, report the blocked step instead of fabricating a value.
+- If a branch result conflicts with the main transcript, trust the main transcript and perform only a targeted repair call.
+- When producing the final answer, include all required exact markers and cite the concrete tool result that supports each marker.
+</residual_swarm_memory>`;
+	}
+
 	private buildMemoryMessage(input: {
 		requestIndex: number;
 		mainModel: Model<any>;
@@ -2255,6 +2476,11 @@ ${nextText || "- none"}`;
 				return `Agent ${draft.agent}: status=${draft.status}; stages=${draft.stages ?? 1}; dependency_updates=${draft.dependencyUpdates ?? 0}; tool_calls=[${calls || "none"}]; final=${truncateText(draft.finalText, 1_200)}`;
 			})
 			.join("\n\n");
+		const exactResults = input.latestDrafts
+			.filter((draft) => draft.toolCalls.length > 0)
+			.map((draft) => `[${draft.branchTitle}]\n${this.formatVerifiedDraft(draft)}`)
+			.join("\n\n");
+		const mandatoryMarkers = this.extractMandatoryExactMarkers(input.latestDrafts);
 
 		return `<residual_swarm_memory version="1" mode="speculative-residual-two-stage">
 Main orchestrator model: ${input.mainModel.provider}/${input.mainModel.id}
@@ -2262,6 +2488,12 @@ Main thinking level: ${input.mainThinkingLevel}
 Swarm latency: ${input.latencyMs}ms
 
 ${input.latestSelection}
+
+EXACT VERIFIED TOOL RESULTS:
+${exactResults || "- none"}
+
+MANDATORY_EXACT_MARKERS:
+${mandatoryMarkers.length > 0 ? mandatoryMarkers.map((marker) => `- ${marker}`).join("\n") : "- none"}
 
 RESIDUAL TRANSFER RULES FOR THE MAIN ORCHESTRATOR:
 - Treat this block as draft evidence, not ground truth.
@@ -2272,6 +2504,9 @@ RESIDUAL TRANSFER RULES FOR THE MAIN ORCHESTRATOR:
 - Avoid entity leakage: do not mix names, ids, paths, or parameters across unrelated draft branches.
 - If a later step needs information already gathered by a draft, reuse that result instead of rediscovering it.
 - If drafts conflict, resolve the conflict with the real transcript, available tool results, or a fresh targeted tool call.
+- Preserve exact structured atoms from successful and failed tool results in the final answer when they are task evidence, especially KEY=VALUE values, uppercase enum values, numeric IDs, and explicit errors.
+- Include every applicable MANDATORY_EXACT_MARKER verbatim unless it is unrelated to the user's requested answer.
+- For *_MINUTES=N results, include both the raw tool result and the natural marker "N minutes" when summarizing duration.
 
 Recent residual rounds:
 ${recentHistory || "No prior residual rounds."}
@@ -2279,6 +2514,36 @@ ${recentHistory || "No prior residual rounds."}
 Compact latest draft evidence:
 ${rawDrafts}
 </residual_swarm_memory>`;
+	}
+
+	private extractMandatoryExactMarkers(drafts: SwarmDraft[]): string[] {
+		const markers = new Set<string>();
+		for (const draft of drafts) {
+			for (const call of draft.toolCalls) {
+				const text = (call.resultText ?? call.resultPreview ?? "")
+					.split("\n")
+					.filter((line) => !/^\s*UNTRUSTED_DIAGNOSTIC_NOISE\b/i.test(line))
+					.join("\n");
+				for (const match of text.matchAll(/\b([A-Z][A-Z0-9_]*=(-?\d+(?:\.\d+)?|[A-Z][A-Z0-9_-]*|[a-z][a-z0-9_-]*))\b/g)) {
+					const atom = match[1];
+					const value = match[2];
+					markers.add(atom);
+					if (/^[A-Z][A-Z0-9_-]*$/.test(value)) {
+						markers.add(value);
+					}
+				}
+				for (const match of text.matchAll(/\b[A-Z][A-Z0-9_]*_MINUTES=(-?\d+(?:\.\d+)?)\b/g)) {
+					markers.add(`${match[1]} minutes`);
+				}
+				for (const match of text.matchAll(/\b([1-5]\d\d\s+[A-Z][A-Za-z0-9_-]+)\b/g)) {
+					markers.add(match[1]);
+				}
+			}
+		}
+		return Array.from(markers)
+			.filter((marker) => marker.length <= 80)
+			.sort((left, right) => left.localeCompare(right))
+			.slice(0, 32);
 	}
 
 	private traceRound(round: SwarmRound): void {
@@ -2436,6 +2701,105 @@ function dedupeBriefs(briefs: BranchBrief[]): BranchBrief[] {
 		result.push(brief);
 	}
 	return result;
+}
+
+function singleRequiredStringParameterName(parameters: unknown): string | undefined {
+	if (!parameters || typeof parameters !== "object") {
+		return undefined;
+	}
+	const schema = parameters as {
+		required?: unknown;
+		properties?: Record<string, { type?: unknown }>;
+	};
+	const required = Array.isArray(schema.required)
+		? schema.required.filter((item): item is string => typeof item === "string")
+		: [];
+	if (required.length !== 1 || !schema.properties) {
+		return undefined;
+	}
+	const name = required[0];
+	const property = schema.properties[name];
+	return property?.type === "string" ? name : undefined;
+}
+
+function extractRepeatedParameterValues(taskText: string, toolName: string, parameterName: string): string[] {
+	const values = new Set<string>();
+	const normalizedTool = normalizeText(toolName).replace(/_/g, " ");
+	const toolVerb = normalizedTool.split(/\s+/, 1)[0] ?? normalizedTool;
+	const normalizedParam = normalizeText(parameterName);
+	const quoted = taskText.matchAll(/["'“”‘’]([^"'“”‘’]{2,80})["'“”‘’]/g);
+	for (const match of quoted) {
+		values.add(cleanParameterValue(match[1]));
+	}
+
+	for (const rawSentence of taskText.split(/[.!?]\s*/)) {
+		const sentence = rawSentence.trim();
+		if (!sentence) {
+			continue;
+		}
+		const normalizedSentence = normalizeText(sentence).replace(/_/g, " ");
+		const mentionsTool =
+			normalizedSentence.includes(normalizedTool) ||
+			(toolVerb.length >= 3 && normalizedSentence.includes(toolVerb));
+		if (!mentionsTool && !normalizedSentence.includes(normalizedParam)) {
+			continue;
+		}
+		const afterTool = sliceAfterToolMention(sentence, normalizedTool, toolVerb);
+		if (!afterTool) {
+			continue;
+		}
+		const entityPhrase = afterTool
+			.replace(/^(?:both|all|each|the|two|three|four|multiple)\s+/i, "")
+			.split(/\b(?:after|before|then|using|with|from|requires?|return|report|multiple calls?)\b/i, 1)[0]
+			.replace(/,\s*$/g, "")
+			.trim();
+		for (const part of entityPhrase.split(/\s+(?:and|or)\s+|,\s*/i)) {
+			const value = cleanParameterValue(part);
+			if (isConcreteParameterValue(value)) {
+				values.add(value);
+			}
+		}
+	}
+
+	return Array.from(values).filter(isConcreteParameterValue);
+}
+
+function sliceAfterToolMention(sentence: string, normalizedTool: string, toolVerb: string): string {
+	const candidates = [normalizedTool, toolVerb]
+		.filter((item) => item.length >= 3)
+		.map((item) => item.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+	for (const candidate of candidates) {
+		const match = new RegExp(`\\b${candidate.replace(/\\ /g, "[\\s_-]+")}\\b`, "i").exec(sentence);
+		if (match) {
+			return sentence.slice((match.index ?? 0) + match[0].length).trim();
+		}
+	}
+	return "";
+}
+
+function cleanParameterValue(value: string): string {
+	return value
+		.replace(/^(?:both|all|each|the|two|three|four|multiple)\s+/i, "")
+		.replace(/\s+(?:results?|values?|coordinates?)$/i, "")
+		.replace(/^[\s:;,\-]+|[\s:;,\-]+$/g, "")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+function isConcreteParameterValue(value: string): boolean {
+	if (value.length < 2 || value.length > 80) {
+		return false;
+	}
+	const normalized = normalizeText(value);
+	if (
+		!normalized ||
+		/^(?:it|them|both|result|results|available|required|exact returned coordinates|(?:are|is|was|were|be|being)\s+required)$/.test(
+			normalized,
+		)
+	) {
+		return false;
+	}
+	return /[A-Z0-9]/.test(value);
 }
 
 function stableStringify(value: unknown): string {

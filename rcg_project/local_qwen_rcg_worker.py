@@ -23,7 +23,8 @@ from mlx_lm.models.base import create_attention_mask
 from mlx_lm.models.cache import LRUPromptCache, trim_prompt_cache
 from mlx_lm.sample_utils import make_sampler
 
-from rcg_policy_server import RcgPolicyEngine, build_parser as build_policy_parser
+from api_harness_policy import PromptHarnessPolicy
+from fascia_moe.policy_engine import FasciaPolicyEngine
 
 
 def log(message):
@@ -126,22 +127,27 @@ class SharedQwenRuntime:
         )
         self.encoder_layers = args.encoder_layers
         self.policy = None
-        if args.rcg_checkpoint:
-            policy_args = build_policy_parser().parse_args([])
-            policy_args.checkpoint = args.rcg_checkpoint
-            policy_args.target_path = args.model_path
-            policy_args.device = args.rcg_device
-            policy_args.random_init = False
-            self.policy = RcgPolicyEngine.from_external_encoder(
-                policy_args,
+        self.prompt_policy = None
+        if args.policy_mode == "trained":
+            if not args.rcg_checkpoint:
+                raise ValueError("trained policy mode requires --rcg-checkpoint")
+            self.policy = FasciaPolicyEngine(
+                args.rcg_checkpoint,
                 self.encode_texts,
                 self.model.args.hidden_size,
+                args.rcg_device,
             )
             log(
-                "RCG controller loaded without a second base model: "
+                "Fascia controller loaded without a second base model: "
                 f"step={self.policy.step} version={self.policy.version}"
             )
         mx.eval(self.model.parameters())
+        if args.policy_mode == "prompt":
+            self.prompt_policy = PromptHarnessPolicy(
+                self.generate_batch,
+                log=log,
+            )
+            log("prompt-only API harness policy enabled; no Fascia weights loaded")
 
     def encode_texts(self, texts, max_length, batch_size):
         if not texts:
@@ -355,14 +361,15 @@ class SharedQwenRuntime:
         return results
 
     def policy_call(self, command, payload):
-        if self.policy is None:
-            raise RuntimeError("No RCG checkpoint was configured")
+        policy = self.policy or self.prompt_policy
+        if policy is None:
+            raise RuntimeError("No dynamic swarm policy was configured")
         if command == "plan":
-            return self.policy.plan(payload)
+            return policy.plan(payload)
         if command == "select":
-            return self.policy.select(payload)
+            return policy.select(payload)
         if command == "route":
-            return self.policy.route(payload)
+            return policy.route(payload)
         raise ValueError(f"Unknown policy command: {command}")
 
 
@@ -403,6 +410,7 @@ def serve(runtime):
             "hiddenSize": runtime.model.args.hidden_size,
             "layers": runtime.model.args.num_hidden_layers,
             "rcgStep": runtime.policy.step if runtime.policy else None,
+            "policyMode": runtime.args.policy_mode,
         },
     })
     deferred = None
@@ -452,6 +460,12 @@ def serve(runtime):
                         "cacheBytes": runtime.prompt_cache.nbytes,
                         "modelPath": runtime.args.model_path,
                         "rcgStep": runtime.policy.step if runtime.policy else None,
+                        "policyMode": runtime.args.policy_mode,
+                        "promptPolicy": (
+                            runtime.prompt_policy.stats
+                            if runtime.prompt_policy
+                            else None
+                        ),
                     },
                 })
             else:
@@ -469,6 +483,11 @@ def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", required=True)
     parser.add_argument("--rcg-checkpoint")
+    parser.add_argument(
+        "--policy-mode",
+        choices=("none", "trained", "prompt"),
+        default="none",
+    )
     parser.add_argument("--rcg-device", default="cpu")
     parser.add_argument("--encoder-layers", type=int, default=8)
     parser.add_argument("--cache-sequences", type=int, default=64)

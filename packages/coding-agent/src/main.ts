@@ -467,11 +467,12 @@ function buildSessionOptions(
 				resolve(rcgRoot, ".venv/bin/python"),
 		);
 		const workerPath = resolve(rcgRoot, "local_qwen_rcg_worker.py");
-		const rcgCheckpoint = parsed.swarm
+		const swarmPolicy = parsed.swarmPolicy ?? "trained";
+		const rcgCheckpoint = parsed.swarm && swarmPolicy === "trained"
 			? resolve(
 					parsed.swarmLocalRcgCheckpoint ??
 						process.env.PI_LOCAL_RCG_CHECKPOINT ??
-						resolve(rcgRoot, "checkpoints/rcg_moe_opd_v1_harness_adapter_best.pt"),
+						resolve(rcgRoot, "checkpoints/fascia_best.pt"),
 				)
 			: undefined;
 		const requiredPaths: Array<readonly [string, string]> = [
@@ -495,6 +496,7 @@ function buildSessionOptions(
 			workerPath,
 			modelPath,
 			rcgCheckpoint,
+			policyMode: parsed.swarm ? swarmPolicy : "none",
 			cacheBytes: Math.round((parsed.localCacheGb ?? parsed.swarmLocalCacheGb ?? 8) * 1024 ** 3),
 			decodeConcurrency: parsed.swarm ? Math.max(1, parsed.swarmAgents?.length ?? 4) : 1,
 			prefillConcurrency: parsed.swarm ? Math.min(4, Math.max(1, parsed.swarmAgents?.length ?? 4)) : 1,

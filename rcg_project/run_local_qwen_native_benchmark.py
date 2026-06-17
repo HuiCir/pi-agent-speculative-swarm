@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -31,7 +32,7 @@ DEFAULT_PYTHON = Path(
     os.environ.get("PI_LOCAL_QWEN_PYTHON", ROOT / ".venv/bin/python")
 )
 DEFAULT_CHECKPOINT = (
-    ROOT / "checkpoints" / "rcg_moe_opd_v1_harness_adapter_best.pt"
+    ROOT / "checkpoints" / "fascia_best.pt"
 )
 
 
@@ -57,7 +58,60 @@ def summarize_local(rows: list[dict]) -> dict:
             )["totalTokens"]
             for row in group
         )
+        policy_rows = [
+            row.get("api_policy") or {}
+            for row in group
+        ]
+        metrics["api_policy_calls"] = sum(
+            int(item.get("calls") or 0) for item in policy_rows
+        )
+        metrics["api_policy_latency_s"] = sum(
+            float(item.get("latencyMs") or 0) for item in policy_rows
+        ) / 1000
+        metrics["api_policy_tokens"] = sum(
+            int(item.get("promptTokens") or 0)
+            + int(item.get("outputTokens") or 0)
+            for item in policy_rows
+        )
     return systems
+
+
+def parse_api_policy_metrics(stderr: str) -> dict:
+    total = {
+        "calls": 0,
+        "latencyMs": 0,
+        "promptTokens": 0,
+        "outputTokens": 0,
+        "byCommand": {},
+    }
+    pattern = re.compile(r"prompt policy (\{.*\})$")
+    for line in stderr.splitlines():
+        match = pattern.search(line)
+        if not match:
+            continue
+        try:
+            row = json.loads(match.group(1))
+        except json.JSONDecodeError:
+            continue
+        command = str(row.get("command") or "unknown")
+        total["calls"] += 1
+        total["latencyMs"] += int(row.get("latencyMs") or 0)
+        total["promptTokens"] += int(row.get("promptTokens") or 0)
+        total["outputTokens"] += int(row.get("outputTokens") or 0)
+        command_stats = total["byCommand"].setdefault(
+            command,
+            {
+                "calls": 0,
+                "latencyMs": 0,
+                "promptTokens": 0,
+                "outputTokens": 0,
+            },
+        )
+        for key in ("calls", "latencyMs", "promptTokens", "outputTokens"):
+            command_stats[key] += (
+                1 if key == "calls" else int(row.get(key) or 0)
+            )
+    return total
 
 
 def command_for(
@@ -92,10 +146,12 @@ def command_for(
             / "packages/coding-agent/test/agent-swarm-benchmark-extension.ts"
         ),
     ]
-    if system == "qwen_rcg_swarm":
+    if system in {"qwen_rcg_swarm", "qwen_api_harness_swarm"}:
         command.extend(
             [
                 "--swarm",
+                "--swarm-policy",
+                "prompt" if system == "qwen_api_harness_swarm" else "trained",
                 "--swarm-agents",
                 args.agents,
                 "--swarm-rounds",
@@ -106,10 +162,15 @@ def command_for(
                 str(args.swarm_timeout_ms),
                 "--swarm-tool-policy",
                 "all",
-                "--swarm-local-rcg-checkpoint",
-                str(args.checkpoint),
             ]
         )
+        if system == "qwen_rcg_swarm":
+            command.extend(
+                [
+                    "--swarm-local-rcg-checkpoint",
+                    str(args.checkpoint),
+                ]
+            )
     command.extend(["-p", task["prompt"]])
     return command
 
@@ -194,6 +255,7 @@ def run_case(
         "tool_trace": tool_rows,
         "final_text": final_text,
         "stderr_tail": stderr[-4000:],
+        "api_policy": parse_api_policy_metrics(stderr),
     }
     result.update(score(task, tool_rows, final_text))
     return result
@@ -203,7 +265,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--systems",
-        default="qwen_pi_base,qwen_rcg_swarm",
+        default="qwen_pi_base,qwen_api_harness_swarm,qwen_rcg_swarm",
     )
     parser.add_argument("--task-ids", default="")
     parser.add_argument("--model-path", type=Path, default=DEFAULT_MODEL)
@@ -240,7 +302,11 @@ def main() -> None:
         for item in args.systems.split(",")
         if item.strip()
     ]
-    unknown = set(systems) - {"qwen_pi_base", "qwen_rcg_swarm"}
+    unknown = set(systems) - {
+        "qwen_pi_base",
+        "qwen_api_harness_swarm",
+        "qwen_rcg_swarm",
+    }
     if unknown:
         raise ValueError(f"unknown systems: {sorted(unknown)}")
     selected_ids = {

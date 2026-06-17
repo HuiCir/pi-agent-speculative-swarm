@@ -23,6 +23,12 @@ describe("parseArgs", () => {
 	});
 
 	describe("swarm RCG policy", () => {
+		test("parses prompt-only swarm policy mode", () => {
+			const result = parseArgs(["--swarm-policy", "prompt"]);
+			expect(result.swarm).toBe(true);
+			expect(result.swarmPolicy).toBe("prompt");
+		});
+
 		test("parses the RCG sidecar URL and timeout", () => {
 			const result = parseArgs([
 				"--swarm-rcg-url",

@@ -1,50 +1,55 @@
-# RCG Speculative Swarm
+# Fascia Speculative Swarm
 
-This repository integrates a trained RCG controller with the Pi agent harness
-and a single native Qwen3-8B runtime. RCG plans distinct tool paths, scores
-execution coherence, transfers verified residual evidence between waves, and
-can promote a complete swarm result directly to the main answer.
+This repository contains the Pi agent speculative swarm harness integrated with
+two dynamic policy modes:
 
-The base model is not duplicated. Main-agent generation, subagents, KV cache,
-and RCG embeddings share one local Qwen3-8B process.
+- `--swarm-policy trained`: load a local Fascia-MoE controller checkpoint.
+- `--swarm-policy prompt`: use a prompt/API planner plus deterministic harness
+  validation, without loading Fascia weights.
 
-## Included
+The swarm runs on one local Qwen3-8B process. Main-agent generation,
+subagents, prompt/KV cache, and Fascia embeddings share that process; the
+controller does not launch a second base model.
 
-- Full Pi monorepo snapshot with the speculative swarm integration.
-- RCG-MoE-OPD V1 controller and training pipeline.
-- Coupled path selection, outcome scoring, recovery routing, and takeover.
-- Native MLX Qwen runtime with shared prompt/KV cache.
-- Final training logs, validation summaries, and benchmark traces.
-- Release assets for the selected checkpoint and generated training dataset.
+## What Is Included
 
-See [RCG_SPECULATIVE_SWARM.md](RCG_SPECULATIVE_SWARM.md) for the runtime design
-and [rcg_project/README.md](rcg_project/README.md) for training details.
+- Full Pi monorepo snapshot with speculative swarm orchestration.
+- Fascia-aware dynamic action-DAG scheduler with direct takeover.
+- Runtime support for trained Fascia and prompt-only API harness policy modes.
+- Fascia-MoE inference code under `rcg_project/fascia_moe/`.
+- Local MLX Qwen worker with shared cache and batched branch execution.
+- Technical report, validation summary, and small benchmark evidence.
+
+Large training data and best checkpoints are intentionally not committed. See
+[ASSET_MANIFEST.md](ASSET_MANIFEST.md) for local paths and SHA-256 hashes.
 
 ## Validated Snapshot
 
-Selected checkpoint:
+Selected local checkpoint:
 
 | Field | Value |
 | --- | --- |
-| Architecture | `rcg_moe_opd_v1_coupled` |
-| Checkpoint version | 13 |
-| Selected step | 200 |
-| RCG parameters | 76,190,821 |
-| Validation composite | 0.725805 |
-| SHA-256 | `5b5a720b50a2fdaf5f7b1ec7457dbcf0513a40d2e58d81aae7cef719980358ae` |
+| Method name | Fascia |
+| Checkpoint version | `fascia_moe_v3_protocol_hotpot_takeover` |
+| Selected step | 1100 |
+| Parameters | 135,095,394 |
+| Best validation score | 0.928431 |
+| SHA-256 | `8ebfc0b38d99dde7ded323383051f772737c023445c6001c7fe4a1952d90c392` |
 
-Controlled seven-case local Qwen3-8B agent harness:
+Latest full validation summary:
 
-| System | Success | Mean main turns | Mean latency | Direct takeover |
-| --- | ---: | ---: | ---: | ---: |
-| Qwen3-8B Pi base | 100% | 3.143 | 28.611 s | 0% |
-| Qwen3-8B + RCG swarm | 100% | 1.000 | 22.978 s | 100% |
+| Suite | Raw Fascia | Trained Fascia | Main comparison |
+| --- | ---: | ---: | --- |
+| Offline controller, 987 rows | 0.3647 | 0.9254 | +0.5607 composite |
+| Merged 4-way controller, 320 rows | 0.1894 | 0.8091 | +0.4276 vs Qwen proxy |
+| Long dependency probe, 6 tasks | 100% success, 4.33 turns | 100% success, 1.00 turn | old v3 failure fixed |
+| Forced multiturn probe, 4 tasks | 50% success, 5.00 turns | 100% success, 1.00 turn | +75 pp vs Qwen base |
 
-In this harness, RCG reduced mean latency by 19.7% (`1.245x`) while preserving
-task success, tool coverage, dependency accuracy, failure attribution, and
-hallucination-free scoring. This is a focused integration benchmark, not a
-claim of broad production generalization. The long-chain case remained slower
-because multi-wave execution was limited by local hardware.
+The long-dependency failure from the previous run was not reproduced after the
+harness fix. The old failure omitted two required `geocode` calls and
+`route_time`; the fixed scheduler expands repeated tool instances into
+argument-level branches, producing exactly two geocode calls plus weather and
+route-time execution.
 
 ## Quick Start
 
@@ -61,27 +66,36 @@ npm run build
 
 python3 -m venv rcg_project/.venv
 rcg_project/.venv/bin/pip install -r rcg_project/requirements-local.txt
-
-gh release download rcg-moe-opd-v1-v13 \
-  --pattern rcg_moe_opd_v1_harness_adapter_best.pt \
-  --dir rcg_project/checkpoints
 ```
 
-Run the native Qwen + RCG swarm:
+Run local Qwen + trained Fascia:
 
 ```bash
 ./pi-test.sh \
   --swarm \
+  --swarm-policy trained \
   --swarm-local-model-path /path/to/Qwen3-8B \
   --swarm-local-python rcg_project/.venv/bin/python \
-  --swarm-local-rcg-checkpoint \
-    rcg_project/checkpoints/rcg_moe_opd_v1_harness_adapter_best.pt \
+  --swarm-local-rcg-checkpoint /path/to/fascia_best_step_1100_0.92843.pt \
   --mode text \
   --no-session \
   -p "Your tool-using task"
 ```
 
-The non-swarm local baseline uses the same model and runtime:
+Run local Qwen + prompt/API harness policy:
+
+```bash
+./pi-test.sh \
+  --swarm \
+  --swarm-policy prompt \
+  --swarm-local-model-path /path/to/Qwen3-8B \
+  --swarm-local-python rcg_project/.venv/bin/python \
+  --mode text \
+  --no-session \
+  -p "Your tool-using task"
+```
+
+The non-swarm local Qwen baseline uses the same model and runtime:
 
 ```bash
 ./pi-test.sh \
@@ -96,26 +110,37 @@ The non-swarm local baseline uses the same model and runtime:
 ## Verification
 
 ```bash
-npm --prefix packages/coding-agent test -- \
-  test/speculative-swarm.test.ts \
-  test/local-qwen-runtime.test.ts
-npm run build
-
-rcg_project/.venv/bin/python -m py_compile \
-  rcg_project/*.py rcg_project/rcg/*.py
+npm --prefix packages/coding-agent test -- test/args.test.ts
+npm --prefix packages/coding-agent run build
+python3 -m py_compile rcg_project/local_qwen_rcg_worker.py \
+  rcg_project/api_harness_policy.py rcg_project/fascia_moe/*.py
+python3 rcg_project/test_api_harness_policy.py
 ```
+
+## Documentation
+
+- [FASCIA_TECHNICAL_REPORT.md](FASCIA_TECHNICAL_REPORT.md): architecture,
+  training, failure analysis, and benchmark results.
+- [RCG_SPECULATIVE_SWARM.md](RCG_SPECULATIVE_SWARM.md): runtime and harness
+  design.
+- [API_HARNESS_COMPARISON.md](API_HARNESS_COMPARISON.md): prompt/API policy
+  versus trained Fascia.
+- [ASSET_MANIFEST.md](ASSET_MANIFEST.md): local checkpoint, data, cache, and
+  validation artifact paths.
 
 ## Layout
 
-- `packages/coding-agent/src/core/speculative-swarm.ts`: swarm orchestration.
+- `packages/coding-agent/src/core/speculative-swarm.ts`: dynamic swarm
+  orchestration, repeated tool-instance expansion, evidence routing, takeover.
 - `packages/coding-agent/src/core/local-qwen-runtime.ts`: shared native runtime.
-- `rcg_project/rcg/moe_opd_controller.py`: trainable RCG controller.
-- `rcg_project/train_rcg_moe_opd_v1.py`: phased/coupled training.
-- `rcg_project/rcg_policy_server.py`: checkpoint inference and routing.
-- `rcg_project/artifacts`: selected logs and evaluation evidence.
+- `rcg_project/local_qwen_rcg_worker.py`: MLX Qwen worker with trained/prompt
+  policy modes.
+- `rcg_project/fascia_moe/`: Fascia-MoE inference model and policy engine.
+- `rcg_project/api_harness_policy.py`: prompt-only policy baseline.
 
-## Attribution
+## Scope
 
-The agent harness is derived from the Pi monorepo and remains under the MIT
-license. RCG-specific integration and training code is included in this
-snapshot under the same repository license.
+This is a research integration snapshot. It demonstrates that a trained
+Fascia controller can reduce main-agent turns and stabilize forced multiturn
+swarm behavior in local controlled tasks. It is not yet a claim of production
+generalization across all external agent benchmarks.

@@ -60,6 +60,7 @@ export interface Args {
 	swarmAllowBash?: boolean;
 	swarmRcgUrl?: string;
 	swarmRcgTimeoutMs?: number;
+	swarmPolicy?: "trained" | "prompt";
 	swarmLocalModelPath?: string;
 	swarmLocalPython?: string;
 	swarmLocalRcgCheckpoint?: string;
@@ -252,6 +253,17 @@ export function parseArgs(args: string[]): Args {
 		} else if (arg === "--swarm-rcg-timeout-ms" && i + 1 < args.length) {
 			result.swarmRcgTimeoutMs = parsePositiveInteger(args[++i], "--swarm-rcg-timeout-ms", result);
 			result.swarm = true;
+		} else if (arg === "--swarm-policy" && i + 1 < args.length) {
+			const value = args[++i];
+			if (value === "trained" || value === "prompt") {
+				result.swarmPolicy = value;
+				result.swarm = true;
+			} else {
+				result.diagnostics.push({
+					type: "error",
+					message: `Invalid --swarm-policy "${value}". Valid values: trained, prompt`,
+				});
+			}
 		} else if (arg === "--swarm-local-model-path" && i + 1 < args.length) {
 			result.swarmLocalModelPath = args[++i];
 			result.swarm = true;
@@ -391,6 +403,7 @@ ${chalk.bold("Options:")}
   --swarm-allow-bash             Allow bash in readonly swarm tool policy
   --swarm-rcg-url <url>          Rejected; RCG runs in the shared local process
   --swarm-rcg-timeout-ms <n>     Deprecated with the local native runtime
+  --swarm-policy <mode>          Dynamic policy: trained (RCG checkpoint) or prompt
   --swarm-local-model-path <p>   Local Qwen3-8B model directory
   --swarm-local-python <p>       Python executable with torch, MLX, and MLX-LM
   --swarm-local-rcg-checkpoint <p>

@@ -418,7 +418,10 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 						enabled: options.speculativeSwarm.enabled ?? true,
 						model: localQwenRuntime ? model : (options.speculativeSwarm.model ?? model),
 						dynamicPolicy:
-							localQwenRuntime && options.localQwenRuntime?.rcgCheckpoint
+							localQwenRuntime &&
+							options.localQwenRuntime?.policyMode !== "none" &&
+							(Boolean(options.localQwenRuntime?.rcgCheckpoint) ||
+								options.localQwenRuntime?.policyMode === "prompt")
 								? localQwenRuntime
 								: options.speculativeSwarm.dynamicPolicy,
 					})

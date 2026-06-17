@@ -31,6 +31,7 @@ export interface LocalQwenRuntimeOptions {
 	workerPath: string;
 	modelPath: string;
 	rcgCheckpoint?: string;
+	policyMode?: "none" | "trained" | "prompt";
 	rcgDevice?: "cpu" | "mps";
 	cacheSequences?: number;
 	cacheBytes?: number;
@@ -395,6 +396,8 @@ export class LocalQwenRuntime implements SpeculativeSwarmDynamicPolicy {
 			String(this.options.prefillConcurrency ?? 4),
 			"--max-output-tokens",
 			String(this.options.mainMaxTokens ?? 512),
+			"--policy-mode",
+			this.options.policyMode ?? (this.options.rcgCheckpoint ? "trained" : "none"),
 		];
 		if (this.options.rcgCheckpoint) {
 			args.push("--rcg-checkpoint", this.options.rcgCheckpoint);
